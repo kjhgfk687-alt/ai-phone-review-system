@@ -1,0 +1,627 @@
+# ==================== 手机评测知识库（2024-2026 终版） ====================
+# 说明：请根据实际评测经验不断完善此文件
+# 格式：每个知识模块包含多个条目，支持模糊匹配
+
+# ==================== 1. 芯片知识库 ====================
+chipsets:
+  # ====== 高通骁龙系列 ======
+  "骁龙8 Elite Gen6":
+    tier: "旗舰"
+    performance_score: 100
+    description: "2026年9月发布，全球首款2nm（台积电N2P）手机芯片，Pro版支持LPDDR6与UFS 5.0，配备18MB高速显存"
+    strengths: ["全球首款2nm移动平台", "CPU主频冲上5GHz", "GPU性能较前代提升40%", "AI算力突破100TOPS"]
+    weaknesses: ["单价预估超300美元，成本极高", "搭载机型售价面临大幅上调压力"]
+    typical_price_range: "5000-10000元"
+    year: 2026
+    note: "分为标准版（SM8950）与Pro版（SM8975），由小米18系列全球首发"
+
+  "骁龙8 Elite Gen5（第五代骁龙8至尊版）":
+    tier: "旗舰"
+    performance_score: 99
+    description: "2025年9月发布，台积电3nm N3P工艺，第三代Oryon自研架构，CPU主频创安卓纪录"
+    strengths: ["双超级核4.6GHz+六性能核3.62GHz", "24MB超低延迟大缓存", "GPU配备独立HBM高速显存", "安兔兔超450万分"]
+    weaknesses: ["极限功耗控制仍有优化空间", "成本较高"]
+    typical_price_range: "4500-9000元"
+    year: 2025
+    note: "GeekBench 6单核3839分、多核12481分，AI性能提升约54%"
+
+  "骁龙8 Elite（原骁龙8 Gen 4）":
+    tier: "旗舰"
+    performance_score: 98
+    description: "2024年10月发布，高通划时代产品，首次搭载自研Oryon CPU架构，彻底告别Arm公版"
+    strengths: ["自研Oryon CPU架构（2颗超大核4.09GHz+6颗大核2.78GHz）", "Adreno 830 GPU主频1.15GHz", "安卓阵营多核性能首次超越苹果A18 Pro"]
+    weaknesses: ["极限频率下功耗与发热挑战极大", "成本高昂"]
+    typical_price_range: "4000-8000元"
+    year: 2024
+    note: "单核约2884分，多核约8840分，这是高通从'魔改公版'转向'全自研'的分水岭"
+
+  "骁龙8 Gen 3":
+    tier: "旗舰"
+    performance_score: 95
+    description: "高通最后一代Arm公版架构旗舰（1+5+2），性能依然强劲，是2024年性价比旗舰的首选"
+    strengths: ["性能优秀", "功耗控制成熟", "价格已降至合理区间"]
+    weaknesses: ["相比自研架构的8 Elite系列，多核性能明显落后"]
+    typical_price_range: "3000-6000元"
+    year: 2024
+
+  "骁龙8s Gen 3":
+    tier: "高端"
+    performance_score: 88
+    description: "骁龙8 Gen 3的青春版，性能接近旗舰但定位稍低"
+    strengths: ["性能接近旗舰", "价格更友好"]
+    weaknesses: ["某些功能有阉割（如缓存缩水）"]
+    typical_price_range: "2500-4000元"
+    year: 2024
+
+  "骁龙7 Gen 4":
+    tier: "中高端"
+    performance_score: 78
+    description: "2025年5月发布，4nm制程，中高端市场主力，支持Wi-Fi 7和蓝牙6.0"
+    strengths: ["CPU性能较前代提升27%", "支持WQHD+ 144Hz刷新率", "功耗控制极佳"]
+    weaknesses: ["大型游戏需降低画质"]
+    typical_price_range: "1500-3000元"
+    year: 2025
+    note: "1×2.8GHz Cortex-A720 + 4×2.4GHz Cortex-A720 + 3×1.8GHz Cortex-A520"
+
+  "骁龙7 Gen 3":
+    tier: "中高端"
+    performance_score: 75
+    description: "中高端芯片，日常使用流畅，游戏性能一般"
+    strengths: ["功耗低", "日常体验好", "性价比高"]
+    weaknesses: ["大型游戏表现一般"]
+    typical_price_range: "1500-3000元"
+    year: 2024
+
+  "骁龙6 Gen 3":
+    tier: "中端"
+    performance_score: 62
+    description: "中端芯片，满足日常使用，适合预算有限用户"
+    strengths: ["功耗低", "价格实惠"]
+    weaknesses: ["游戏性能较弱"]
+    typical_price_range: "1000-2000元"
+    year: 2024
+
+  # ====== 联发科天玑系列 ======
+  "天玑9500":
+    tier: "旗舰"
+    performance_score: 98
+    description: "2025年9月发布，台积电第三代3nm工艺，全大核架构，坚持Arm公版路线"
+    strengths: ["单核性能提升32%，多核提升17%", "NPU 990 AI算力提升111%", "支持端侧4K图像生成", "GPU性能提升33%"]
+    weaknesses: ["品牌认知度在超高端市场不如骁龙"]
+    typical_price_range: "3500-7500元"
+    year: 2025
+    note: "1×C1-Ultra（4.21GHz）+ 3×C1-Premium（3.5GHz）+ 4×C1-Pro（2.7GHz）"
+
+  "天玑9400":
+    tier: "旗舰"
+    performance_score: 97
+    description: "2024年10月发布，台积电第二代3nm工艺，291亿晶体管，全大核架构的能效标杆"
+    strengths: ["全大核架构能效卓越", "NPU 890 AI算力领先", "支持1500米超远距离蓝牙", "安兔兔超284万分"]
+    weaknesses: ["极限单核性能略逊于骁龙自研架构"]
+    typical_price_range: "3500-7000元"
+    year: 2024
+    note: "1×3.626GHz Cortex-X925 + 3×3.3GHz Cortex-X4 + 4×2.4GHz Cortex-A720"
+
+  "天玑9300":
+    tier: "旗舰"
+    performance_score: 94
+    description: "联发科上代旗舰，全大核架构（4×X4+4×A720），性能激进"
+    strengths: ["性能强劲", "AI算力强", "性价比高"]
+    weaknesses: ["功耗略高", "发热需注意"]
+    typical_price_range: "3000-6000元"
+    year: 2024
+
+  "天玑8400":
+    tier: "中高端"
+    performance_score: 82
+    description: "2024年12月发布，全大核架构，天玑8系最强型号"
+    strengths: ["8×Cortex-A725全大核（最高3.25GHz）", "多核性能提升41%", "支持硬件光线追踪", "功耗降低44%"]
+    weaknesses: ["极限性能不及旗舰"]
+    typical_price_range: "1500-3000元"
+    year: 2024
+    note: "搭载Arm Immortalis G720 MC7 GPU"
+
+  "天玑8300":
+    tier: "中高端"
+    performance_score: 78
+    description: "中高端芯片，性能均衡，适合日常使用"
+    strengths: ["功耗控制好", "价格实惠"]
+    weaknesses: ["极限性能一般"]
+    typical_price_range: "1500-3000元"
+    year: 2024
+
+  "天玑7300":
+    tier: "中端"
+    performance_score: 68
+    description: "中端芯片，性能满足日常，主打低功耗"
+    strengths: ["功耗极低", "性价比高"]
+    weaknesses: ["游戏性能有限"]
+    typical_price_range: "1000-2000元"
+    year: 2024
+
+  # ====== 苹果A系列 ======
+  "A19 Pro":
+    tier: "旗舰"
+    performance_score: 100
+    description: "2025年9月发布，台积电3nm N3P工艺，苹果史上最强单核性能"
+    strengths: ["单核跑分3895-4019分，较A18 Pro提升13%", "超M4 MacBook Pro单核", "芯片面积缩小约10%", "6核GPU支持硬件光追"]
+    weaknesses: ["仅限苹果设备", "价格昂贵"]
+    typical_price_range: "8000-12000元"
+    year: 2025
+    note: "6核CPU（2性能核心+4能效核心），性能核心二级缓存16MB"
+
+  "A19":
+    tier: "旗舰"
+    performance_score: 98
+    description: "2025年9月发布，A19 Pro的青春版，性能依然顶尖"
+    strengths: ["6核CPU+5核GPU", "相同功耗下性能提升5%", "GPU性能最高提升20%"]
+    weaknesses: ["仅限苹果设备"]
+    typical_price_range: "6000-10000元"
+    year: 2025
+    note: "性能核心二级缓存8MB"
+
+  "A18 Pro":
+    tier: "旗舰"
+    performance_score: 97
+    description: "苹果上代旗舰（2024），为Apple Intelligence而生的芯片"
+    strengths: ["单核3447分，多核8576分", "16核神经网络引擎", "能效优秀"]
+    weaknesses: ["仅限苹果设备"]
+    typical_price_range: "6000-10000元"
+    year: 2024
+
+  "A17 Pro":
+    tier: "旗舰"
+    performance_score: 95
+    description: "苹果上代旗舰，首款支持硬件光追的苹果芯片"
+    strengths: ["性能强劲", "能效优秀"]
+    weaknesses: ["仅限苹果设备"]
+    typical_price_range: "6000-10000元"
+    year: 2024
+
+  "A16 Bionic":
+    tier: "旗舰"
+    performance_score: 92
+    description: "苹果2022年旗舰芯片，性能依然流畅"
+    strengths: ["单核性能强", "能效均衡"]
+    weaknesses: ["仅限苹果设备"]
+    typical_price_range: "4000-7000元"
+    year: 2022
+
+  "A15 Bionic":
+    tier: "旗舰"
+    performance_score: 88
+    description: "苹果2021年旗舰芯片，日常使用依然出色"
+    strengths: ["性能稳定", "功耗低"]
+    weaknesses: ["仅限苹果设备"]
+    typical_price_range: "3000-5000元"
+    year: 2021
+
+  # ====== 三星Exynos系列 ======
+  "Exynos 2600":
+    tier: "旗舰"
+    performance_score: 96
+    description: "2026年1月发布，全球首款2nm（三星GAA工艺）手机芯片，三星垂直整合战略的关键"
+    strengths: ["全球首款2nm移动芯片", "10核心CPU设计（1×3.9GHz + 3×3.25GHz + 6×2.75GHz）", "综合性能较前代提升39%", "首次集成虚拟化安全技术"]
+    weaknesses: ["仅限特定市场Galaxy S26系列（非全球）", "产能有限"]
+    typical_price_range: "5000-9000元"
+    year: 2026
+    note: "Counterpoint预计2026年Exynos出货量将增长7.3%"
+
+  # ====== 华为麒麟系列 ======
+  "麒麟9030 Pro":
+    tier: "旗舰"
+    performance_score: 91
+    description: "2025年底发布，等效5nm工艺（中芯国际N+3），综合性能较9020提升42%，支持硬件光追"
+    strengths: ["国产化供应链完全自主", "九核CPU+超线程技术（软件识别9核14线程）", "Maleoon 935 GPU支持硬件光追", "第九代ISP实时处理能力提升100%"]
+    weaknesses: ["制程相比台积电3nm仍有差距", "极限性能落后高通/苹果旗舰约15-20%"]
+    typical_price_range: "6000-12000元"
+    year: 2025
+    note: "首发Mate 80 Pro/Max/RS及Pura X Max，方舟内存引擎使游戏启动速度提升80%"
+
+  "麒麟9030S":
+    tier: "旗舰"
+    performance_score: 88
+    description: "2026年发布的9030精简版，主频略低，仍属旗舰序列"
+    strengths: ["稳定的国产供应链", "Maleoon 935F GPU", "支持5.5G卫星通信"]
+    weaknesses: ["性能释放保守", "相比Pro版有明显阉割"]
+    typical_price_range: "5000-9000元"
+    year: 2026
+    note: "搭载于Pura 90 Pro/Max、新一代三折叠机型"
+
+  "麒麟9020":
+    tier: "旗舰"
+    performance_score: 85
+    description: "2024年11月发布，7nm工艺，支持超线程技术（软件识别12核），首次实现5.5G卫星通信"
+    strengths: ["自研泰山架构+超线程", "小核能效较前代提升50%", "自研第八代ISP", "集成5G基带"]
+    weaknesses: ["7nm制程功耗偏高", "安兔兔约125万分，与同期骁龙8 Elite有代差"]
+    typical_price_range: "5000-10000元"
+    year: 2024
+    note: "Mate 70 Pro/Pro+/RS、Pura 80 Ultra/Pro+搭载，2025年9月麒麟芯片时隔四年首次在发布会公开亮相"
+
+  "麒麟9010":
+    tier: "旗舰"
+    performance_score: 80
+    description: "2024年上代旗舰，自研超大核+大核组合，性能接近骁龙8 Gen 2水平"
+    strengths: ["自研CPU架构", "Maleoon 910 GPU能效尚可"]
+    weaknesses: ["制程工艺相对落后", "Geekbench 6单核1447/多核4765"]
+    typical_price_range: "4000-8000元"
+    year: 2024
+    note: "Pura 70 Pro/Pro+/Ultra搭载"
+
+  "麒麟8020":
+    tier: "中高端"
+    performance_score: 68
+    description: "2025年底发布，12核泰山架构，独立于9系设计（非阉割版），中端走量主力"
+    strengths: ["独立设计，成本可控", "多核性能比麒麟8000强50%", "功耗控制优于9系"]
+    weaknesses: ["单核性能偏弱（Geekbench 6单核1284）", "不支持超线程"]
+    typical_price_range: "2500-4000元"
+    year: 2025
+    note: "搭载于nova 15标准版，定位1999-2499元起，对标骁龙7系"
+
+  "麒麟7系（2026即将回归）":
+    tier: "中端"
+    performance_score: 55
+    description: "预计2026年内发布，目标畅享系列等入门5G市场，补齐华为全价位自研芯片拼图"
+    strengths: ["自研5G基带", "价格亲民"]
+    weaknesses: ["性能仅满足日常使用"]
+    typical_price_range: "1500-2500元"
+    year: 2026
+    note: "此前麒麟710F定位中端，此次回归将填补华为入门5G市场空白"
+
+  "麒麟2026（规划中）":
+    tier: "旗舰（未来）"
+    performance_score: 95
+    description: "预计2026年秋季发布，晶体管密度达238MTr/mm²（接近台积电3nm），9核14线程，Mate 90系列首发"
+    strengths: ["晶体管密度跃升53.5%", "逻辑折叠技术（韬定律）", "主频3.1GHz，进一步追赶国际旗舰"]
+    weaknesses: ["尚未量产，真实表现待验证"]
+    typical_price_range: "6000-12000元"
+    year: 2026
+    note: "华为规划2026-2029年主频从3.1GHz逐步提升至4.0GHz"
+
+# ==================== 2. 屏幕知识库 ====================
+displays:
+  resolution_guide:
+    "4K": "超高清分辨率，细节极致，适合VR和高端影音"
+    "2K": "超高清显示，细节丰富，适合影音娱乐和阅读"
+    "1.5K": "高清显示，平衡了清晰度和功耗，主流选择"
+    "1080P": "标准高清，日常使用足够，功耗低"
+    "720P": "入门级分辨率，仅适合低端机型"
+  
+  refresh_rate_guide:
+    "165Hz": "电竞级刷新率，游戏体验极致流畅"
+    "144Hz": "顶级刷新率，游戏体验极佳"
+    "120Hz": "高刷新率，滑动流畅，主流旗舰标配"
+    "90Hz": "中等刷新率，日常够用，平衡功耗"
+    "60Hz": "标准刷新率，基础体验"
+  
+  screen_type_guide:
+    "AMOLED": "色彩鲜艳，对比度高，支持息屏显示和屏下指纹"
+    "OLED": "自发光屏幕，黑色纯净，省电"
+    "LCD": "护眼，成本较低，亮度均匀"
+    "Mini LED": "高亮度，高对比度，适合平板和笔记本"
+  
+  brightness_guide:
+    "8000nit以上": "顶级亮度，阳光下清晰可见（如荣耀X80 Pro Max）"
+    "5000-8000nit": "超高亮度，户外使用无压力"
+    "4000-5000nit": "高亮度，户外使用体验优秀"
+    "3000-4000nit": "高亮度，户外使用无压力"
+    "2000-3000nit": "中等偏上亮度，日常够用"
+    "2000nit以下": "标准亮度，室内使用为主"
+
+# ==================== 3. 电池与充电知识库 ====================
+battery:
+  capacity_guide:
+    "10000以上": "巨无霸续航，待机超过96小时，重度游戏超过12小时，视频播放超过20小时，重度使用两天以上无压力"
+    "7000-10000": "超长续航，待机67-96小时，游戏8.5-12小时，视频14-20小时，重度使用两天无压力"
+    "6000-7000": "超长续航，待机58-67小时，游戏7-8.5小时，视频12-14小时，重度使用一天半以上"
+    "5500-6000": "长续航，待机53-58小时，游戏6.5-7小时，视频11-12小时，重度使用一天，轻度使用两天"
+    "5000-5500": "优秀续航，待机48-53小时，游戏6-6.5小时，视频10-11小时，日常使用一天无压力"
+    "4500-5000": "标准续航，待机43-48小时，游戏5.5-6小时，视频9-10小时，中度使用一天"
+    "4000-4500": "续航一般，待机38-43小时，游戏5-5.5小时，视频8-9小时，需要每天充电"
+    "4000以下": "续航较弱，待机不足38小时，游戏不足5小时，视频不足8小时，建议随身携带充电宝"
+  
+  charging_guide:
+    "200W以上": "超级闪充，10分钟内充满，充电速度惊人"
+    "120-200W": "超级快充，20分钟内充满"
+    "80-120W": "快速充电，30分钟充至80%"
+    "40-80W": "标准快充，1小时内充满"
+    "20-40W": "普通快充，1.5小时充满"
+    "20W以下": "慢充，需要2小时以上"
+  
+  wireless_charging_guide:
+    "50W以上": "极速无线充电，接近有线体验"
+    "30-50W": "快速无线充电，1小时充满"
+    "15-30W": "标准无线充电，1.5-2小时充满"
+    "15W以下": "慢速无线充电，适合夜间充电"
+
+# ==================== 4. 相机知识库 ====================
+camera:
+  sensor_guide:
+    "1英寸": "顶级大底传感器，进光量充足，夜景出色，画质细腻"
+    "1/1.12英寸": "超大底传感器（索尼LYT-901），2亿像素，画质极致"
+    "1/1.3英寸": "大底传感器，画质优秀，暗光表现出色"
+    "1/1.5英寸": "中等偏大传感器，平衡画质和手机厚度"
+    "1/2英寸": "标准传感器，日常拍摄够用"
+    "1/2.5英寸以下": "小尺寸传感器，光线充足时表现尚可"
+  
+  aperture_guide:
+    "f/1.4-f/1.8": "大光圈，虚化效果好，暗光表现佳，人像出色"
+    "f/1.8-f/2.2": "中等光圈，日常拍摄均衡，兼顾画质和景深"
+    "f/2.2-f/2.8": "小光圈，适合光线充足环境，景深较大"
+    "f/2.8以上": "很小光圈，主要用超广角或微距"
+  
+  pixel_guide:
+    "2亿像素": "超高像素，适合大幅裁切和打印（索尼LYT-901与三星ISOCELL HPC均为2亿）"
+    "1亿像素": "高像素，细节丰富，适合后期处理"
+    "5000万像素": "主流高像素，平衡画质和文件大小"
+    "1200万像素": "经典像素，暗光表现好，文件大小适中"
+  
+  zoom_guide:
+    "20倍光学品质变焦": "行业首创（OPPO Find X9 Ultra），颠覆性远摄能力"
+    "10倍以上光学变焦": "顶级变焦能力，远景拍摄出色"
+    "5-10倍光学变焦": "优秀变焦，演唱会无压力"
+    "3-5倍光学变焦": "实用变焦，日常拍摄够用"
+    "3倍以下": "基础变焦，主要靠数码变焦"
+
+# ==================== 5. 传感器数据库（2024-2026年最新） ====================
+sensors:
+  # 索尼LYTIA系列
+  "LYT-901":
+    tier: "顶级旗舰传感器"
+    description: "索尼LYTIA品牌首款2亿像素手机传感器，2025年11月发布"
+    key_features: ["1/1.12英寸超大底", "2亿有效像素", "0.7μm像素尺寸", "支持4倍传感器内置变焦（ISZ）", "动态范围超100dB", "支持4K 120fps 10-bit Log"]
+    application: "vivo X300 Ultra、OPPO Find X9 Ultra"
+    year: 2025
+
+  "LYTIA L910":
+    tier: "顶级旗舰传感器"
+    description: "索尼首款搭载LOFIC（横向溢出积分电容）技术的传感器，2026年6月发布"
+    key_features: ["5000万像素", "单次曝光实现100dB动态范围（防高光过曝）", "支持4K 60fps录影"]
+    application: "荣耀Magic8 RSR保时捷设计"
+    year: 2026
+
+  "LYT-828":
+    tier: "高端传感器"
+    description: "索尼5000万像素CMOS，主摄级成像质量"
+    key_features: ["5000万像素"]
+    application: "motorola razr fold"
+    year: 2026
+
+  "IMX989":
+    tier: "旗舰传感器"
+    description: "索尼1英寸大底传感器，2022年旗舰标配"
+    key_features: ["1英寸", "5000万像素", "4合1像素融合", "8K视频"]
+    application: "小米12S Ultra、vivo X90 Pro+等"
+    year: 2022
+
+  "IMX890":
+    tier: "高端传感器"
+    description: "索尼5000万像素传感器，广泛用于中高端机型"
+    key_features: ["1/1.56英寸", "5000万像素", "全像素对焦"]
+    application: "OPPO Reno10 Pro+、一加11等"
+    year: 2023
+
+  "IMX766":
+    tier: "高端传感器"
+    description: "索尼经典5000万像素传感器，打磨成熟"
+    key_features: ["1/1.56英寸", "5000万像素", "全像素全向对焦"]
+    application: "OPPO Find X5 Pro、华为P50 Pro等"
+    year: 2021
+
+  # 三星ISOCELL系列
+  "ISOCELL HPC":
+    tier: "顶级旗舰传感器"
+    description: "三星最新2亿像素传感器，引入DeepPix底层像素技术"
+    key_features: ["2亿像素", "DeepPix技术", "单帧最高17EV动态范围", "暗光与逆光成像出色"]
+    application: "OPPO Find X10 Pro Max首发"
+    year: 2026
+
+  "ISOCELL HP5":
+    tier: "旗舰传感器"
+    description: "三星2亿像素图像传感器"
+    key_features: ["2亿像素", "16合1像素融合", "OIS光学防抖"]
+    application: "iQOO Z11 Turbo"
+    year: 2026
+
+  "ISOCELL S5KGN3":
+    tier: "高端传感器"
+    description: "三星5000万像素传感器"
+    key_features: ["5000万像素", "F1.4大光圈"]
+    application: "三星Galaxy S26/S26+主摄"
+    year: 2026
+
+  "ISOCELL GN2":
+    tier: "旗舰传感器"
+    description: "三星1/1.12英寸大底传感器，曾为小米11 Ultra主摄"
+    key_features: ["1/1.12英寸", "5000万像素", "双原生ISO"]
+    application: "小米11 Ultra"
+    year: 2021
+
+  "ISOCELL GN1":
+    tier: "高端传感器"
+    description: "三星5000万像素传感器，广泛用于各品牌旗舰"
+    key_features: ["1/1.31英寸", "5000万像素", "全像素双核对焦"]
+    application: "vivo X60 Pro+、魅族18 Pro等"
+    year: 2021
+
+# ==================== 6. 品牌特色知识库（2025-2026年最新） ====================
+brands:
+  "OPPO":
+    full_name: "OPPO"
+    specialties: ["影像调校出色", "快充技术领先", "ColorOS流畅"]
+    target_users: "注重拍照和快充的年轻用户"
+    brand_positioning: "影像旗舰"
+    key_technologies: ["哈苏影像", "SuperVOOC快充", "LUMO凝光影像系统", "20倍光学品质变焦"]
+    new_technologies_2025_2026:
+      - "LUMO凝光影像系统：全焦段5000万像素，16EV动态范围"
+      - "哈苏大师模式原生胶片：9款大师胶片（含Portra胶片）"
+      - "20倍光学品质变焦：首创五反射潜望棱镜和空气光阑技术"
+
+  "vivo":
+    full_name: "vivo"
+    specialties: ["人像拍摄强", "HiFi音质", "OriginOS美观"]
+    target_users: "喜欢拍照和听歌的用户"
+    brand_positioning: "影像+音频旗舰"
+    key_technologies: ["蔡司影像", "微云台防抖", "蓝图影像芯片"]
+    new_technologies_2025_2026:
+      - "蔡司大师镜头群：14mm超广角+35mm人文+85mm云台级长焦"
+      - "vivo蔡司长焦增距镜Gen 2 Ultra：APO光学认证+T*镀膜"
+      - "CIPA 7.0专业级防抖"
+
+  "小米":
+    full_name: "小米"
+    specialties: ["性价比高", "澎湃OS", "生态链完整"]
+    target_users: "追求性价比的数码爱好者"
+    brand_positioning: "性价比之王"
+    key_technologies: ["徕卡影像", "澎湃OS", "快充技术"]
+    new_technologies_2025_2026:
+      - "徕卡APO光学认证"
+      - "LOFIC超维感光技术：传感器层面扩展动态范围"
+      - "徕卡2亿75-100mm长焦：支持连续光学变焦"
+
+  "华为":
+    full_name: "华为"
+    specialties: ["信号好", "鸿蒙生态", "影像能力强", "全栈自研"]
+    target_users: "商务人士和摄影爱好者"
+    brand_positioning: "高端商务旗舰"
+    key_technologies: ["XMAGE影像", "昆仑玻璃", "卫星通信", "鸿蒙OS"]
+    new_technologies_2025_2026:
+      - "XMAGE红枫影像系统"
+      - "全域双向卫星通信系统"
+      - "鸿蒙OS 7.0/鸿蒙NEXT"
+      - "麒麟芯片+纯血鸿蒙+XMAGE+卫星通信全栈自研"
+
+  "荣耀":
+    full_name: "荣耀"
+    specialties: ["护眼屏幕领先", "续航优秀", "性价比高"]
+    target_users: "注重护眼和续航的用户"
+    brand_positioning: "均衡旗舰"
+    key_technologies: ["绿洲护眼", "青海湖电池", "鹰眼相机"]
+    new_technologies_2025_2026:
+      - "绿洲护眼屏：九大护眼技术，3480Hz零风险调光"
+      - "青海湖电池第四代：硅含量与能量密度领先，最高11000mAh"
+      - "德国莱茵TÜV全局护眼5.0认证"
+
+  "三星":
+    full_name: "三星"
+    specialties: ["屏幕顶级", "做工精良", "S Pen体验"]
+    target_users: "追求品质和屏幕的用户"
+    brand_positioning: "安卓机皇"
+    key_technologies: ["Dynamic AMOLED", "S Pen", "One UI", "Exynos"]
+    new_technologies_2025_2026:
+      - "Exynos 2600：全球首款2nm手机芯片"
+      - "ISOCELL HPC：2亿像素+17EV动态范围"
+
+  "苹果":
+    full_name: "苹果"
+    specialties: ["系统流畅", "生态完善", "视频拍摄强"]
+    target_users: "注重体验和生态的用户"
+    brand_positioning: "高端标杆"
+    key_technologies: ["iOS", "A系列芯片", "ProMotion"]
+    new_technologies_2025_2026:
+      - "A19 Pro：单核跑分超4000分，芯片面积缩小10%"
+      - "Apple Intelligence深度集成"
+
+  # 子品牌补充
+  "一加":
+    full_name: "一加"
+    specialties: ["性能调校激进", "系统简洁", "性价比高"]
+    target_users: "追求性能和简洁的用户"
+    brand_positioning: "性能旗舰"
+    key_technologies: ["三段式按键", "哈苏影像", "快充"]
+    new_technologies_2025_2026:
+      - "哈苏影像联名"
+      - "最高150W快充"
+
+  "iQOO":
+    full_name: "iQOO"
+    specialties: ["电竞优化", "快充强", "屏幕素质高"]
+    target_users: "游戏玩家和性能爱好者"
+    brand_positioning: "电竞旗舰"
+    key_technologies: ["独显芯片", "超快闪充", "电竞模式"]
+    new_technologies_2025_2026:
+      - "200W超快闪充"
+      - "独显芯片Pro+"
+
+  "realme":
+    full_name: "realme"
+    specialties: ["性价比极高", "快充普及", "设计潮流"]
+    target_users: "年轻用户和学生党"
+    brand_positioning: "潮玩电竞"
+    key_technologies: ["240W快充", "GT模式"]
+    new_technologies_2025_2026:
+      - "240W满级秒充"
+      - "电竞级散热"
+
+# ==================== 7. 使用场景知识库 ====================
+usage_scenarios:
+  "游戏玩家":
+    key_params: ["soc", "refresh_rate", "battery_capacity", "cooling_system", "touch_sampling_rate"]
+    description: "重度游戏用户需要关注芯片性能、散热和续航"
+    recommendations: ["骁龙8 Elite系列", "天玑9500/9400", "120Hz以上刷新率", "5000mAh以上电池"]
+    
+  "摄影爱好者":
+    key_params: ["camera_sensor", "aperture", "ois", "image_processing", "zoom"]
+    description: "摄影爱好者重点关注相机硬件和算法"
+    recommendations: ["1英寸或1/1.12英寸大底", "大光圈", "光学防抖", "哈苏/蔡司/徕卡联名"]
+    
+  "日常使用":
+    key_params: ["battery_capacity", "weight", "os", "screen_size", "price"]
+    description: "日常使用关注续航、手感和系统流畅度"
+    recommendations: ["4500mAh以上电池", "200g以内重量", "主流系统"]
+    
+  "商务人士":
+    key_params: ["signal", "security", "battery", "dual_sim", "brand"]
+    description: "商务用户关注信号稳定性和续航"
+    recommendations: ["华为", "苹果", "大电池", "双卡双待", "卫星通信"]
+    
+  "学生党":
+    key_params: ["price", "performance", "battery", "durability"]
+    description: "学生用户关注性价比和耐用性"
+    recommendations: ["2000-4000元", "骁龙7/8系", "天玑8系", "大电池"]
+    
+  "长辈使用":
+    key_params: ["screen_size", "font_size", "battery", "simplicity"]
+    description: "长辈用户关注屏幕大小和易用性"
+    recommendations: ["大屏幕", "大字体", "长续航", "简单系统", "护眼屏"]
+
+# ==================== 8. 通用评测话术模板 ====================
+review_templates:
+  performance:
+    excellent: "{soc}性能强劲，日常使用流畅，大型游戏也能轻松应对"
+    good: "{soc}性能够用，日常使用无压力，主流游戏流畅运行"
+    average: "{soc}性能中规中矩，满足日常使用，大型游戏需降低画质"
+    
+  battery:
+    excellent: "{capacity}大电池配合优秀功耗控制，续航表现出色"
+    good: "{capacity}电池容量适中，配合快充使用体验不错"
+    average: "{capacity}电池容量一般，重度使用需随身携带充电器"
+    
+  camera:
+    excellent: "相机系统出色，{sensor_size}大底传感器配合{brand}影像算法，拍照效果出众"
+    good: "相机配置均衡，满足日常拍摄需求，夜景表现尚可"
+    average: "相机配置入门，光线充足时拍摄效果可以接受"
+    
+  display:
+    excellent: "{resolution}分辨率配合{refresh_rate}刷新率，显示效果细腻流畅"
+    good: "屏幕素质不错，色彩准确，日常使用体验良好"
+    average: "屏幕配置标准，满足基本使用需求"
+
+# ==================== 9. 价格区间建议 ====================
+price_guide:
+  "1000-2000元": "入门级，适合预算有限的用户"
+  "2000-3000元": "中端性价比，满足日常使用"
+  "3000-4000元": "中高端，性能与价格平衡"
+  "4000-6000元": "高端旗舰，综合素质优秀"
+  "6000-8000元": "顶级旗舰，各方面都是顶级水准"
+  "8000元以上": "超高端，追求极致体验"
+
+# ==================== 10. 2025-2026年行业趋势总结 ====================
+industry_trends:
+  - "**2nm时代开启**：三星Exynos 2600（2026.1）与高通骁龙8 Elite Gen6（2026.9）率先进入2nm制程"
+  - "**自研架构分水岭**：高通从8 Elite开始全面转向自研Oryon CPU，告别Arm公版；联发科坚持全大核公版路线，两大阵营分野"
+  - "**AI从功能到中枢**：AI成为系统级智能体，NPU算力成为芯片核心宣传指标"
+  - "**电池容量突破万级**：荣耀等品牌推出10000mAh以上电池，续航军备竞赛白热化"
+  - "**护眼成为刚需**：绿洲护眼屏等护眼技术成为中高端机型重要卖点"
+  - "**影像联名深度化**：哈苏、蔡司、徕卡从滤镜走向光学系统深度定制（APO认证、原生胶片、T*镀膜）"
+  - "**华为麒麟全线反击**：形成9系旗舰、8系中高端、7系中端完整矩阵，国产化供应链完全自主"

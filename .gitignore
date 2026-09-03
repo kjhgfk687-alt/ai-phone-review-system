@@ -1,0 +1,9 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+output/
+.idea/
+.env
+.DS_Store
+ceshi/
