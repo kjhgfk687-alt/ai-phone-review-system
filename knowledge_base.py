@@ -116,6 +116,9 @@ class PhoneKnowledgeBase:
                     if "以上" in key and brightness_num >= self._extract_number(key):
                         result["brightness_desc"] = desc
                         break
+                    elif "以下" in key and brightness_num <= self._extract_number(key):
+                        result["brightness_desc"] = desc
+                        break
                     elif "-" in key:
                         nums = [self._extract_number(n) for n in key.split("-")]
                         if len(nums) == 2 and nums[0] <= brightness_num <= nums[1]:
@@ -140,6 +143,9 @@ class PhoneKnowledgeBase:
                     if "以上" in key and cap_num >= self._extract_number(key):
                         result["capacity_desc"] = desc
                         break
+                    elif "以下" in key and cap_num <= self._extract_number(key):
+                        result["capacity_desc"] = desc
+                        break
                     elif "-" in key:
                         nums = [self._extract_number(n) for n in key.split("-")]
                         if len(nums) == 2 and nums[0] <= cap_num <= nums[1]:
@@ -155,6 +161,9 @@ class PhoneKnowledgeBase:
                     if "以上" in key and charge_num >= self._extract_number(key):
                         result["charging_desc"] = desc
                         break
+                    elif "以下" in key and charge_num <= self._extract_number(key):
+                        result["charging_desc"] = desc
+                        break
                     elif "-" in key:
                         nums = [self._extract_number(n) for n in key.split("-")]
                         if len(nums) == 2 and nums[0] <= charge_num <= nums[1]:
@@ -168,6 +177,9 @@ class PhoneKnowledgeBase:
             if wireless_num:
                 for key, desc in wireless_guide.items():
                     if "以上" in key and wireless_num >= self._extract_number(key):
+                        result["wireless_charging_desc"] = desc
+                        break
+                    elif "以下" in key and wireless_num <= self._extract_number(key):
                         result["wireless_charging_desc"] = desc
                         break
                     elif "-" in key:
@@ -228,9 +240,18 @@ class PhoneKnowledgeBase:
                     if "以上" in key and zoom_num >= self._extract_float(key):
                         result["zoom_desc"] = desc
                         break
+                    elif "以下" in key and zoom_num <= self._extract_float(key):
+                        result["zoom_desc"] = desc
+                        break
                     elif "-" in key:
                         nums = [self._extract_float(n) for n in key.split("-")]
                         if len(nums) == 2 and nums[0] <= zoom_num <= nums[1]:
+                            result["zoom_desc"] = desc
+                            break
+                    else:
+                        # 无区间标记的键（如"20倍光学品质变焦"）按数值相等匹配
+                        key_num = self._extract_float(key)
+                        if key_num is not None and abs(zoom_num - key_num) < 0.1:
                             result["zoom_desc"] = desc
                             break
 
