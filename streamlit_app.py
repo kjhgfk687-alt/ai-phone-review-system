@@ -5,12 +5,15 @@ import json
 import time
 import html
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 
 # 导入核心函数
 sys.path.append(os.path.dirname(__file__))
 from cshi import (
     extract_single_phone, generate_review, generate_comparison,
-    KEY_TRANSLATION, clear_cache, EXTRACT_API_KEY
+    generate_personalized_advice, KEY_TRANSLATION, clear_cache,
+    MAX_PARALLEL_URLS, EXTRACT_API_KEY,
+    submit_generation_task, get_generation_task
 )
 
 # 页面配置
@@ -23,13 +26,18 @@ st.set_page_config(
 st.title("📱 AI手机参数提取与评测系统")
 st.markdown("---")
 
+# 紧凑键值对样式（参数双栏区使用）
+st.markdown("""<style>
+.compact-kv p { margin: 0 0 5px 0; font-size: 0.88em; line-height: 1.5; }
+</style>""", unsafe_allow_html=True)
+
 # 初始化会话状态
 if "phones" not in st.session_state:
     st.session_state.phones = []          # 已提取的手机列表
-if "review_results" not in st.session_state:
-    st.session_state.review_results = {}  # 评测结果，键为手机唯一 id
-if "comparison_result" not in st.session_state:
-    st.session_state.comparison_result = None
+if "user_profile" not in st.session_state:
+    st.session_state.user_profile = None  # 侧边栏用户画像
+# 评测/建议/对比结果改由 cshi 后台任务存储管理（get_generation_task），
+# 界面轮询渲染，因此不再需要 review_results/advice_results/comparison_result
 
 # ================= 侧边栏 =================
 with st.sidebar:
@@ -39,13 +47,43 @@ with st.sidebar:
 
     if st.button("🗑️ 清空全部结果", use_container_width=True):
         st.session_state.phones = []
-        st.session_state.review_results = {}
-        st.session_state.comparison_result = None
+        # 正在后台生成的任务不中断，完成后结果因手机列表已清空而不再展示
         st.rerun()
 
     if st.button("🧹 清除缓存", use_container_width=True):
         removed = clear_cache()
         st.toast(f"已清除 {removed} 个缓存文件", icon="🧹")
+
+    # ---- 用户画像（个性化推荐的独立 UI 块，位置可整体迁移） ----
+    st.divider()
+    st.header("👤 用户画像")
+    profile_enabled = st.toggle(
+        "启用个性化", value=True,
+        help="开启后，评测/对比/建议会按你的身份和侧重要素调整语言风格与内容深度"
+    )
+    user_type = st.radio(
+        "你的身份",
+        ["数码小白", "数码爱好者", "购机决策者"],
+        index=0,
+        help="对应调研问卷中的三类用户画像"
+    )
+    priorities = st.multiselect(
+        "最看重什么？（可多选）",
+        ["性能/游戏", "续航/充电", "拍照", "屏幕", "性价比", "品牌"],
+        default=[]
+    )
+    budget = st.slider(
+        "预算上限（元）", 0, 15000, 0, step=500,
+        help="0 表示不限预算"
+    )
+    if profile_enabled:
+        st.session_state.user_profile = {
+            "user_type": user_type,
+            "priorities": priorities,
+            "budget": budget if budget > 0 else None,
+        }
+    else:
+        st.session_state.user_profile = None
 
     st.divider()
     # API Key 配置状态检查（避免误把认证失败当成余额问题）
@@ -67,45 +105,84 @@ with st.sidebar:
     )
 
 # ================= 展示辅助函数 =================
-def display_params(params, container, indent=0, conflict_paths=None, path=""):
-    """
-    递归展示参数（遍历英文原始键，展示时翻译为中文）。
-    conflict_paths 为发生冲突的完整参数路径集合（英文路径，与提取时记录一致），
-    只有精确命中路径的参数才显示 ⚠️，避免同名键误报。
-    """
-    if conflict_paths is None:
-        conflict_paths = set()
+CATEGORY_ICONS = {
+    "basic_info": "📋", "processor": "🔥", "memory_storage": "💾", "display": "🖥️",
+    "battery_charging": "🔋", "camera": "📷", "connectivity": "📡", "sensors": "🧭",
+    "audio": "🔊", "physical": "📏",
+}
 
-    indent_html = "&nbsp;&nbsp;&nbsp;&nbsp;" * indent
+def _valid_leaf(label: str, value) -> bool:
+    """叶子参数是否值得展示：非空、非'未提及'、值不等于键名（冗余）"""
+    return bool(value) and value != "未提及" and str(value).strip() != label
 
-    for key, value in params.items():
-        if str(key).startswith('_'):
+def _flat_leaves(d: dict) -> list:
+    """把子树拍平为 [(label, value_str)]（值经 HTML 转义）"""
+    out = []
+    for k, v in d.items():
+        if str(k).startswith("_"):
             continue
+        label = KEY_TRANSLATION.get(k, k)
+        if isinstance(v, dict):
+            out.extend(_flat_leaves(v))
+        elif _valid_leaf(label, v):
+            out.append((label, html.escape(str(v))))
+    return out
 
-        current_path = f"{path}.{key}" if path else key
-        label = KEY_TRANSLATION.get(key, key)
-        conflict_found = current_path in conflict_paths
+def _render_kv_two_columns(container, pairs):
+    """键值对双栏紧凑渲染"""
+    if not pairs:
+        return
+    half = (len(pairs) + 1) // 2
+    cols = container.columns(2)
+    for col, chunk in zip(cols, (pairs[:half], pairs[half:])):
+        body = "".join(f"<p><b>{l}</b>: {v}</p>" for l, v in chunk)
+        col.markdown(f"<div class='compact-kv'>{body}</div>", unsafe_allow_html=True)
 
-        if isinstance(value, dict):
-            container.markdown(f"{indent_html}**{label}**", unsafe_allow_html=True)
-            display_params(value, container, indent + 1, conflict_paths, current_path)
-        elif isinstance(value, list):
-            container.markdown(f"{indent_html}**{label}**", unsafe_allow_html=True)
-            for item in value:
-                if isinstance(item, dict):
-                    display_params(item, container, indent + 1, conflict_paths, current_path)
-                else:
-                    container.markdown(f"{indent_html}- {item}")
-        else:
-            if value and value != "未提及":
-                if conflict_found:
-                    container.markdown(
-                        f"{indent_html}**{label}**: {html.escape(str(value))} "
-                        "<span title='此参数在不同分段提取结果中存在差异，已保留首个非空值，请注意核对'>⚠️</span>",
-                        unsafe_allow_html=True
-                    )
-                else:
-                    container.markdown(f"{indent_html}**{label}**: {html.escape(str(value))}", unsafe_allow_html=True)
+def render_params_tabs(container, params):
+    """完整参数：分类标签页 + 双栏键值对"""
+    categories = [(k, v) for k, v in params.items()
+                  if not str(k).startswith("_") and isinstance(v, dict)]
+    if not categories:
+        container.caption("无参数数据")
+        return
+    labels = [f"{CATEGORY_ICONS.get(k, '📁')} {KEY_TRANSLATION.get(k, k)}"
+              for k, _ in categories]
+    tabs = container.tabs(labels)
+    for tab, (cat_key, cat_val) in zip(tabs, categories):
+        leaves, groups = [], []
+        for k, v in cat_val.items():
+            if str(k).startswith("_"):
+                continue
+            label = KEY_TRANSLATION.get(k, k)
+            if isinstance(v, dict):
+                sub = _flat_leaves(v)
+                if sub:
+                    groups.append((label, sub))
+            elif _valid_leaf(label, v):
+                leaves.append((label, html.escape(str(v))))
+        _render_kv_two_columns(tab, leaves)
+        for gtitle, gpairs in groups:
+            tab.markdown(f"**{gtitle}**")
+            _render_kv_two_columns(tab, gpairs)
+        if not leaves and not groups:
+            tab.caption("本分类未提取到有效参数")
+
+def translate_path(path: str) -> str:
+    """把英文参数路径翻译成中文展示（display.refresh_rate → 显示屏 › 刷新率）"""
+    return " › ".join(KEY_TRANSLATION.get(seg, seg) for seg in str(path).split("."))
+
+def render_conflicts_table(container, conflicts):
+    """冲突明细：独立折叠表格（替代参数行内 ⚠️ 标记）"""
+    if not conflicts:
+        return
+    with container.expander(f"⚠️ 冲突明细（{len(conflicts)} 处，已自动保留首个非空值）",
+                            expanded=False):
+        rows = [{
+            "参数": translate_path(c.get("path", "")),
+            "保留值": str(c.get("final_value", c.get("value1", ""))),
+            "另一分段提取值": str(c.get("value2", "")),
+        } for c in conflicts]
+        st.dataframe(rows, use_container_width=True, hide_index=True)
 
 def display_knowledge_summary(summary, container):
     """展示知识总结（中文键名）"""
@@ -128,7 +205,6 @@ def display_knowledge_summary(summary, container):
         "zoom_desc": "变焦",
     }
 
-    # 芯片解读
     if "chipset" in summary:
         chipset = summary["chipset"]
         name = chipset.get("name", "")
@@ -155,31 +231,15 @@ def display_knowledge_summary(summary, container):
             container.markdown(f"📌 {info['note']}")
         container.markdown("---")
 
-    # 屏幕解读
-    if "display" in summary:
-        container.markdown("### 🖥️ 屏幕表现")
-        for key, desc in summary["display"].items():
-            label = display_key_map.get(key, key.replace('_desc', ''))
-            container.markdown(f"- **{label}**：{desc}")
-        container.markdown("---")
+    for section_key, title in [("display", "🖥️ 屏幕表现"), ("battery", "🔋 电池与充电"),
+                               ("camera", "📷 相机能力")]:
+        if section_key in summary:
+            container.markdown(f"### {title}")
+            for key, desc in summary[section_key].items():
+                label = display_key_map.get(key, key.replace('_desc', ''))
+                container.markdown(f"- **{label}**：{desc}")
+            container.markdown("---")
 
-    # 电池解读
-    if "battery" in summary:
-        container.markdown("### 🔋 电池与充电")
-        for key, desc in summary["battery"].items():
-            label = display_key_map.get(key, key.replace('_desc', ''))
-            container.markdown(f"- **{label}**：{desc}")
-        container.markdown("---")
-
-    # 相机解读
-    if "camera" in summary:
-        container.markdown("### 📷 相机能力")
-        for key, desc in summary["camera"].items():
-            label = display_key_map.get(key, key.replace('_desc', ''))
-            container.markdown(f"- **{label}**：{desc}")
-        container.markdown("---")
-
-    # 品牌解读
     if "brand" in summary:
         brand = summary["brand"]
         container.markdown("### 🏢 品牌特色")
@@ -197,6 +257,31 @@ def display_knowledge_summary(summary, container):
                 container.markdown(f"- {tech}")
         container.markdown("---")
 
+# ---- 后台生成任务的轮询渲染（fragment 自动刷新） ----
+@st.fragment(run_every="2s")
+def task_fragment(task_id: str, header: str, download_name: str = None):
+    """轮询渲染后台生成任务：运行中显示耗时与流式正文，完成显示结果与下载"""
+    t = get_generation_task(task_id)
+    if not t:
+        return
+    if t["status"] == "running":
+        elapsed = time.time() - t["started"]
+        extra = f"，正文已到 {len(t['text'])} 字" if t["text"] else ""
+        st.info(f"⏳ {t['title']} 生成中… 已用 {elapsed:.0f} 秒{extra}")
+        if t["text"]:
+            st.markdown(t["text"])
+    elif t["status"] == "done":
+        st.markdown(f"**{header}**")
+        st.markdown(t["text"])
+        if download_name:
+            st.download_button(
+                "⬇️ 下载（Markdown）", data=t["text"],
+                file_name=download_name, mime="text/markdown",
+                key=f"dl_{task_id}"
+            )
+    else:
+        st.error(f"{t['title']} 生成失败：{t['error']}（可重试）")
+
 # ================= 输入与提取 =================
 url_input = st.text_area(
     "输入手机参数页URL（每行一个）",
@@ -205,47 +290,82 @@ url_input = st.text_area(
 )
 
 if st.button("🚀 开始提取", type="primary"):
-    urls = [u.strip() for u in url_input.split('\n') if u.strip().startswith("http")]
+    # 输入去重 + 过滤无效行
+    urls = list(dict.fromkeys(u.strip() for u in url_input.split('\n') if u.strip().startswith("http")))
 
     if not urls:
         st.error("请输入至少一个有效URL（以 http 开头）")
     else:
         existing_urls = {p.get("url") for p in st.session_state.phones}
-        progress_bar = st.progress(0.0, text="准备中...")
+        new_urls = [u for u in urls if u not in existing_urls]
+        if len(new_urls) < len(urls):
+            st.info(f"⏭️ 跳过 {len(urls) - len(new_urls)} 个本次会话已提取过的URL")
+        if not new_urls:
+            st.info("没有需要提取的新URL")
+        else:
+            workers = min(MAX_PARALLEL_URLS, len(new_urls))
+            st.info(f"🚀 并行提取 {len(new_urls)} 个URL（{workers} 个同时进行）")
 
-        for i, url in enumerate(urls):
-            if url in existing_urls:
-                st.info(f"⏭️ 已跳过（本次会话已提取过）：{url}")
-                continue
+            status_map = {u: st.status(f"📡 待开始：{u}", expanded=False) for u in new_urls}
+            progress_bar = st.progress(0.0, text="准备中...")
 
-            with st.status(f"📡 [{i + 1}/{len(urls)}] 正在处理：{url}", expanded=True) as status:
-                def update_progress(p, msg):
-                    progress_bar.progress(p, text=f"{msg}")
+            # 线程安全约定：工作线程只写 progress_map，主线程轮询渲染
+            progress_map = {}
 
-                start_time = time.time()
-                result, phone_name, error = extract_single_phone(
-                    url, use_cache=use_cache, progress_callback=update_progress
-                )
+            def make_callback(url):
+                def cb(p, msg):
+                    progress_map[url] = (p, msg)
+                return cb
 
-                if result:
-                    st.session_state.phones.append({
-                        "id": uuid.uuid4().hex,
-                        "url": url,
-                        "phone_name": phone_name,
-                        "params": result,
-                        "knowledge_summary": result.get("_knowledge_summary"),
-                        "conflicts": result.get("_conflicts", []),
-                        "tags": result.get("_tags", []),
-                    })
-                    status.update(
-                        label=f"✅ {phone_name} 提取成功（{time.time() - start_time:.1f}秒）",
-                        state="complete", expanded=False
-                    )
-                else:
-                    status.update(label=f"❌ 提取失败：{url}", state="error", expanded=True)
-                    st.error(f"提取失败：{error or '未知错误'}")
+            pending_futs = {}
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                for u in new_urls:
+                    pending_futs[pool.submit(
+                        extract_single_phone, u,
+                        use_cache=use_cache, progress_callback=make_callback(u)
+                    )] = u
 
-        progress_bar.progress(1.0, text="全部处理完成")
+                remaining = set(new_urls)
+                deadline = time.time() + 900
+                while remaining and time.time() < deadline:
+                    for u in remaining:
+                        if u in progress_map:
+                            _, msg = progress_map[u]
+                            status_map[u].update(label=f"{msg}")
+                    done_ps = [progress_map.get(u, (0.0, ""))[0] for u in new_urls]
+                    overall = sum(done_ps) / len(new_urls)
+                    progress_bar.progress(overall, text=f"总体进度 {overall * 100:.0f}%")
+
+                    for fut in list(pending_futs):
+                        if fut.done():
+                            u = pending_futs.pop(fut)
+                            remaining.discard(u)
+                            try:
+                                result, phone_name, error = fut.result()
+                            except Exception as e:
+                                result, phone_name, error = None, None, f"线程异常：{e}"
+
+                            if result:
+                                st.session_state.phones.append({
+                                    "id": uuid.uuid4().hex,
+                                    "url": u,
+                                    "phone_name": phone_name,
+                                    "params": result,
+                                    "knowledge_summary": result.get("_knowledge_summary"),
+                                    "conflicts": result.get("_conflicts", []),
+                                    "tags": result.get("_tags", []),
+                                })
+                                status_map[u].update(
+                                    label=f"✅ {phone_name} 提取成功",
+                                    state="complete", expanded=False
+                                )
+                            else:
+                                status_map[u].update(label=f"❌ 提取失败：{u}", state="error", expanded=True)
+                                with status_map[u]:
+                                    st.error(f"提取失败：{error or '未知错误'}")
+                    time.sleep(0.4)
+
+            progress_bar.progress(1.0, text="全部处理完成")
 
 # ================= 提取结果展示 =================
 if st.session_state.phones:
@@ -255,13 +375,13 @@ if st.session_state.phones:
     for phone in st.session_state.phones:
         phone_id = phone["id"]
         name = phone["phone_name"]
+        safe_name = str(name).replace(' ', '_').replace('/', '_')
 
         # 标题行 + 删除按钮
         title_col, del_col = st.columns([6, 1])
         title_col.markdown(f"### 📱 {name}")
         if del_col.button("🗑️ 删除", key=f"del_{phone_id}"):
             st.session_state.phones = [p for p in st.session_state.phones if p["id"] != phone_id]
-            st.session_state.review_results.pop(phone_id, None)
             st.rerun()
 
         # 参数标签
@@ -280,28 +400,41 @@ if st.session_state.phones:
             with st.expander("📚 专业知识解读", expanded=False):
                 display_knowledge_summary(phone['knowledge_summary'], st)
 
-        # 完整参数（冲突提示精确到参数路径）
+        # 完整参数：分类标签页 + 双栏；冲突明细独立表格
         conflict_count = len(phone.get('conflicts', []))
         expander_title = f"🔍 完整参数" + (f"（{conflict_count} 处冲突 ⚠️）" if conflict_count else "")
         with st.expander(expander_title, expanded=False):
-            if conflict_count:
-                st.caption("⚠️ 表示该参数在不同分段提取结果中存在差异，已保留首个非空值")
-            conflict_paths = {c["path"] for c in phone.get('conflicts', [])}
-            display_params(phone['params'], st, conflict_paths=conflict_paths)
+            render_params_tabs(st, phone['params'])
+            render_conflicts_table(st, phone.get('conflicts', []))
 
-        # 操作行：生成评测 + 下载参数
-        action_col1, action_col2 = st.columns(2)
+        # 操作行：提交后台生成任务（点击即返回，界面不锁，可同时生成多部）
+        profile = st.session_state.get("user_profile")
+        action_col1, action_col2, action_col3 = st.columns(3)
+
         if action_col1.button(f"📝 生成评测：{name}", key=f"review_{phone_id}"):
-            with st.spinner("正在生成评测..."):
-                review = generate_review(phone['phone_name'], phone['params'], phone['knowledge_summary'])
-            if review:
-                st.session_state.review_results[phone_id] = review
-            else:
-                st.error("评测生成失败，请重试（可在终端查看具体原因）")
+            accepted = submit_generation_task(
+                f"review_{phone_id}", f"{name} 的评测",
+                lambda cb, p=phone: generate_review(
+                    p["phone_name"], p["params"], p["knowledge_summary"],
+                    profile, on_text=cb)
+            )
+            st.toast("评测已开始后台生成，可继续其他操作 🚀" if accepted
+                     else "该评测已在生成中，请稍候", icon="🚀")
+
+        if action_col2.button("🎯 个性化建议", key=f"advice_{phone_id}",
+                              disabled=profile is None,
+                              help="先在左侧『用户画像』设置身份与侧重要素"):
+            accepted = submit_generation_task(
+                f"advice_{phone_id}", f"{name} 的个性化建议",
+                lambda cb, p=phone: generate_personalized_advice(
+                    p["phone_name"], p["params"], p["knowledge_summary"],
+                    profile, on_text=cb)
+            )
+            st.toast("建议已开始后台生成 🚀" if accepted
+                     else "该建议已在生成中，请稍候", icon="🚀")
 
         params_json = json.dumps(phone['params'], ensure_ascii=False, indent=2)
-        safe_name = str(name).replace(' ', '_').replace('/', '_')
-        action_col2.download_button(
+        action_col3.download_button(
             "⬇️ 下载参数 JSON",
             data=params_json,
             file_name=f"{safe_name}_params.json",
@@ -310,22 +443,14 @@ if st.session_state.phones:
             use_container_width=True
         )
 
-        # 评测结果
-        if phone_id in st.session_state.review_results:
-            review_md = st.session_state.review_results[phone_id]
-            st.markdown("**📝 专业评测**")
-            st.markdown(review_md)
-            st.download_button(
-                "⬇️ 下载评测（Markdown）",
-                data=review_md,
-                file_name=f"{safe_name}_评测.md",
-                mime="text/markdown",
-                key=f"dl_review_{phone_id}"
-            )
+        # 后台任务状态与结果（自动轮询刷新）
+        task_fragment(f"review_{phone_id}", "📝 专业评测", f"{safe_name}_评测.md")
+        task_fragment(f"advice_{phone_id}", "🎯 个性化选购建议（依据左侧用户画像）",
+                      f"{safe_name}_个性化建议.md")
 
         st.markdown("---")
 
-# ================= 对比评测 =================
+# ================= 对比评测（后台生成） =================
 if len(st.session_state.phones) >= 2:
     st.subheader("🔍 对比评测")
 
@@ -338,27 +463,20 @@ if len(st.session_state.phones) >= 2:
     )
 
     if st.button("🔍 生成对比评测", disabled=len(selected_ids) < 2):
-        with st.spinner("正在生成对比评测..."):
-            phones_data = [
-                {
-                    "phone_name": p["phone_name"],
-                    "params": p["params"],
-                    "knowledge_summary": p["knowledge_summary"]
-                }
-                for p in st.session_state.phones if p["id"] in selected_ids
-            ]
-            comparison = generate_comparison(phones_data)
-        if comparison:
-            st.session_state.comparison_result = comparison
-        else:
-            st.error("对比评测生成失败，请重试（可在终端查看具体原因）")
-
-    if st.session_state.comparison_result:
-        st.markdown(st.session_state.comparison_result)
-        st.download_button(
-            "⬇️ 下载对比评测（Markdown）",
-            data=st.session_state.comparison_result,
-            file_name="手机对比评测.md",
-            mime="text/markdown",
-            key="dl_comparison"
+        phones_data = [
+            {
+                "phone_name": p["phone_name"],
+                "params": p["params"],
+                "knowledge_summary": p["knowledge_summary"]
+            }
+            for p in st.session_state.phones if p["id"] in selected_ids
+        ]
+        profile = st.session_state.get("user_profile")
+        accepted = submit_generation_task(
+            "comparison", f"{len(phones_data)} 部手机对比评测",
+            lambda cb: generate_comparison(phones_data, profile, on_text=cb)
         )
+        st.toast("对比评测已开始后台生成 🚀" if accepted
+                 else "对比评测已在生成中，请稍候", icon="🚀")
+
+    task_fragment("comparison", "🔍 对比评测", "手机对比评测.md")

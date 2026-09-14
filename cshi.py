@@ -7,6 +7,7 @@ import re
 import time
 import os
 import hashlib
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Any, List, Optional, Callable, Tuple
 
@@ -40,7 +41,13 @@ REVIEW_API_KEY = os.environ.get("DEEPSEEK_REVIEW_API_KEY", "") or EXTRACT_API_KE
 JINA_READER_URL = os.environ.get("JINA_READER_URL", "http://127.0.0.1:3001/")
 MODEL_NAME = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
 MAX_PARALLEL_CHUNKS = int(os.environ.get("MAX_PARALLEL_CHUNKS", "4"))
+MAX_PARALLEL_URLS = int(os.environ.get("MAX_PARALLEL_URLS", "3"))
 API_MAX_RETRIES = int(os.environ.get("API_MAX_RETRIES", "3"))
+# 评测类文本生成关闭模型思考（实测 thinking:disabled 生效，耗时约减半）；
+# 参数提取保持默认思考以保证解析准确率。设为 0 可恢复思考。
+DISABLE_THINKING = os.environ.get("DISABLE_THINKING", "1") != "0"
+# 评测/建议/对比的后台生成并发数
+MAX_PARALLEL_GENERATIONS = int(os.environ.get("MAX_PARALLEL_GENERATIONS", "3"))
 CACHE_DIR = os.path.join(BASE_DIR, "cache")
 
 client = OpenAI(api_key=EXTRACT_API_KEY or "sk-not-configured", base_url="https://api.deepseek.com")
@@ -101,7 +108,8 @@ def fetch_markdown(url: str, max_retries: int = 2) -> Optional[str]:
 
 # ================= 4. LLM 调用封装（带重试与退避） =================
 def call_llm(client_obj, prompt: str, *, temperature: float = 0.1, timeout: int = 120,
-             max_tokens: int = 8000, json_mode: bool = True, tag: str = "LLM调用") -> str:
+             max_tokens: int = 8000, json_mode: bool = True, tag: str = "LLM调用",
+             disable_thinking: bool = False) -> str:
     last_error = None
     for attempt in range(1, API_MAX_RETRIES + 1):
         try:
@@ -114,6 +122,9 @@ def call_llm(client_obj, prompt: str, *, temperature: float = 0.1, timeout: int 
             )
             if json_mode:
                 kwargs["response_format"] = {"type": "json_object"}
+            if disable_thinking:
+                # 实测 deepseek-flash 支持该参数：reasoning_tokens 归零、耗时约减半
+                kwargs["extra_body"] = {"thinking": {"type": "disabled"}}
             response = client_obj.chat.completions.create(**kwargs)
             content = response.choices[0].message.content
             if not (content and content.strip()):
@@ -132,22 +143,59 @@ def call_llm(client_obj, prompt: str, *, temperature: float = 0.1, timeout: int 
                 time.sleep(wait)
     raise RuntimeError(f"{tag}连续 {API_MAX_RETRIES} 次失败：{str(last_error)[:100]}")
 
+def _stream_text(client_obj, prompt: str, *, temperature: float, timeout: int,
+                 max_tokens: int, tag: str, on_text: Callable, disable_thinking: bool) -> str:
+    """流式生成纯文本：逐 chunk 只取 delta.content（思考流 reasoning_content 不展示，
+    通过 on_text 实时回传给界面），返回完整正文。"""
+    kwargs = dict(
+        model=MODEL_NAME,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=temperature,
+        timeout=timeout,
+        max_tokens=max_tokens,
+        stream=True,
+    )
+    if disable_thinking:
+        kwargs["extra_body"] = {"thinking": {"type": "disabled"}}
+    parts = []
+    response = client_obj.chat.completions.create(**kwargs)
+    for chunk in response:
+        if not getattr(chunk, "choices", None):
+            continue
+        piece = getattr(chunk.choices[0].delta, "content", None)
+        if piece:
+            parts.append(piece)
+            on_text(piece)
+    return "".join(parts)
+
 def call_llm_text(client_obj, prompt: str, *, temperature: float = 0.5, timeout: int = 180,
-                  max_tokens: int = 8000, tag: str = "文本生成", attempts: int = 2) -> Optional[str]:
+                  max_tokens: int = 8000, tag: str = "文本生成", attempts: int = 2,
+                  on_text: Optional[Callable] = None,
+                  disable_thinking: bool = DISABLE_THINKING) -> Optional[str]:
     """
     生成纯文本（评测等，非JSON）。
-    deepseek-flash 属"先思考后正文"的模型：长输入下思考可能耗尽 token 预算导致正文为空，
-    或推理耗时超过单次超时——call_llm 只对异常重试，这里对"空正文"再做软重试，
-    且预算给足（8000，只按实际生成计费）。
+    - on_text 提供时走流式路径，正文片段实时回调（用于界面逐步显示）；
+    - 空正文（思考耗尽额度等静默失败）会清空已回传文本后软重试；
+    - 默认关闭模型思考（评测类长文本实测提速约一半，质量由结构化摘要保证）。
     """
     last_error = None
     for i in range(attempts):
         try:
-            content = call_llm(client_obj, prompt, temperature=temperature, timeout=timeout,
-                               max_tokens=max_tokens, json_mode=False, tag=tag)
+            if on_text is not None:
+                content = _stream_text(client_obj, prompt, temperature=temperature,
+                                       timeout=timeout, max_tokens=max_tokens,
+                                       tag=tag, on_text=on_text,
+                                       disable_thinking=disable_thinking)
+            else:
+                content = call_llm(client_obj, prompt, temperature=temperature,
+                                   timeout=timeout, max_tokens=max_tokens,
+                                   json_mode=False, tag=tag,
+                                   disable_thinking=disable_thinking)
             if content and content.strip():
                 return content.strip()
-            print(f"⚠️ {tag} 第 {i + 1} 次返回空正文（思考耗尽额度），重试...")
+            if on_text is not None:
+                on_text(None)  # 通知界面清空，准备重试
+            print(f"⚠️ {tag} 第 {i + 1} 次返回空正文，重试...")
         except Exception as e:
             last_error = e
             print(f"⚠️ {tag} 失败: {str(e)[:100]}")
@@ -158,8 +206,6 @@ def call_llm_text(client_obj, prompt: str, *, temperature: float = 0.5, timeout:
 # ================= 5. 自动识别手机名称 =================
 def extract_phone_name(markdown_text: str, url: str) -> str:
     """从网页内容中自动识别手机名称"""
-    print("🔍 正在识别手机型号...")
-
     prompt = f"""
     从以下手机官网的Markdown内容中识别手机的品牌和完整型号名称。
 
@@ -915,9 +961,35 @@ def _build_review_brief(phone_name: str, params: dict, knowledge_summary) -> dic
     # 移除整体为空的分区，进一步降噪
     return {k: v for k, v in brief.items() if v not in ("", None, {}, [])}
 
-def generate_review(phone_name: str, params: dict, knowledge_summary) -> Optional[str]:
-    """生成单手机专业评测"""
+def _build_profile_block(user_profile: Optional[dict]) -> str:
+    """把用户画像转成 prompt 指令块；未提供画像时返回空串（保持通用行为）"""
+    if not user_profile:
+        return ""
+    user_type = user_profile.get("user_type", "")
+    priorities = user_profile.get("priorities") or []
+    budget = user_profile.get("budget")
+
+    style_map = {
+        "数码小白": "读者是数码小白：全文大白话，出现的每个技术术语必须紧跟一句通俗解释，多用生活化类比",
+        "数码爱好者": "读者是数码爱好者：保留技术细节与规格数值，可以引用行业背景，不必过度解释基础概念",
+        "购机决策者": "读者正准备购机：每个部分先给结论再给理由，最后给明确的买/不买倾向提示",
+    }
+    lines = ["", "    【读者画像（个性化要求，优先级高于上述通用风格）】"]
+    if user_type in style_map:
+        lines.append(f"    - {style_map[user_type]}")
+    if priorities:
+        lines.append(f"    - 读者最关心：{'、'.join(priorities)}。相关章节要写深写透，其余章节可适当从简")
+    if budget:
+        lines.append(f"    - 读者预算约 {budget} 元。如摘要中有价格信息，结合预算评估是否超预算；无价格信息则不要臆测价格")
+    return "\n".join(lines)
+
+def generate_review(phone_name: str, params: dict, knowledge_summary,
+                    user_profile: Optional[dict] = None,
+                    on_text: Optional[Callable] = None) -> Optional[str]:
+    """生成单手机专业评测；user_profile 可选，用于个性化语言风格与侧重；
+    on_text 可选，提供时流式回传正文片段"""
     brief = _build_review_brief(phone_name, params, knowledge_summary)
+    profile_block = _build_profile_block(user_profile)
 
     prompt = f"""
     你是一位以客观中立著称的专业手机评测编辑，请基于下面的参数摘要为 {phone_name} 撰写一篇评测。
@@ -929,22 +1001,24 @@ def generate_review(phone_name: str, params: dict, knowledge_summary) -> Optiona
     4. "知识库评价"是行业通用认知，可作为专业背景引用
     5. 面向普通消费者，专业但易懂；不与其他机型对比；不带营销吹嘘语气
     6. 直接输出评测正文，不要输出任何思考过程、前言或额外说明
-
+{profile_block}
     参数摘要：
     {json.dumps(brief, ensure_ascii=False, indent=2)}
     """
     try:
         return call_llm_text(review_client, prompt, temperature=0.5, timeout=180,
-                             max_tokens=8000, tag="单机评测")
+                             max_tokens=8000, tag="单机评测", on_text=on_text)
     except Exception as e:
         print(f"生成评测失败: {str(e)[:100]}")
         return None
 
 # ================= 17. 生成多手机对比评测（使用 review_client） =================
-def generate_comparison(phones_data: list) -> Optional[str]:
-    """生成多手机对比评测"""
+def generate_comparison(phones_data: list, user_profile: Optional[dict] = None,
+                        on_text: Optional[Callable] = None) -> Optional[str]:
+    """生成多手机对比评测；user_profile 可选；on_text 可选（流式回传）"""
     if len(phones_data) < 2:
         return "至少需要两部手机才能进行对比。"
+    profile_block = _build_profile_block(user_profile)
 
     phones_brief = []
     for phone in phones_data:
@@ -988,16 +1062,120 @@ def generate_comparison(phones_data: list) -> Optional[str]:
     4. 只依据给定数据，严禁编造；某项数据为"未知"时直接说明缺失，不要猜测
     5. 最后按用户群体给出推荐（如：游戏玩家/拍照用户/续航焦虑用户/预算优先），没有明显差异时如实说明
     6. 直接输出正文（Markdown），不要输出思考过程或额外说明
-
+{profile_block}
     手机信息：
     {json.dumps(phones_brief, ensure_ascii=False, indent=2)}
     """
     try:
         return call_llm_text(review_client, prompt, temperature=0.3, timeout=180,
-                             max_tokens=8000, tag="对比评测")
+                             max_tokens=8000, tag="对比评测", on_text=on_text)
     except Exception as e:
         print(f"生成对比评测失败: {str(e)[:100]}")
         return None
+
+# ================= 17.5 个性化选购建议 =================
+def generate_personalized_advice(phone_name: str, params: dict, knowledge_summary,
+                                 user_profile: dict,
+                                 on_text: Optional[Callable] = None) -> Optional[str]:
+    """
+    针对单部手机，结合用户画像生成"契合点/注意点/一句话结论"的定制建议。
+    画像不完整时退化为通用建议。
+    """
+    brief = _build_review_brief(phone_name, params, knowledge_summary)
+    profile_block = _build_profile_block(user_profile)
+
+    prompt = f"""
+    你是一位务实的手机导购顾问。请根据下面的参数摘要和读者画像，为 {phone_name} 生成一份个性化选购建议。
+
+    输出格式（Markdown）：
+    **✅ 与你需求的契合点**
+    - （结合画像侧重要素，逐条说明这部手机哪里符合读者需求，引用具体参数）
+
+    **⚠️ 需要注意**
+    - （结合画像说明可能不满足需求的地方或参数短板；若无价格信息，不要臆测）
+
+    **🎯 一句话结论**
+    （一句话给出去留判断，如"适合你"/"建议再对比"/"不符合你的核心需求"，并说明核心理由）
+
+    要求：只依据摘要数据，不编造；总字数 150-300 字；直接输出正文，无思考过程、无额外说明。
+    如画像中包含多部候选手机则只分析当前这一部。
+{profile_block}
+    参数摘要：
+    {json.dumps(brief, ensure_ascii=False, indent=2)}
+    """
+    try:
+        return call_llm_text(review_client, prompt, temperature=0.4, timeout=150,
+                             max_tokens=8000, tag="个性化建议", on_text=on_text)
+    except Exception as e:
+        print(f"生成个性化建议失败: {str(e)[:100]}")
+        return None
+
+# ================= 18. 后台生成任务管理（评测/建议/对比并行化） =================
+# Streamlit 一个会话同时只能跑一个脚本，同步生成会锁界面且互相打断。
+# 解法：按钮只提交任务立即返回，真正的生成在工作线程池执行，
+# 界面通过 fragment 轮询任务存储渲染状态与流式正文。
+_tasks: Dict[str, dict] = {}
+_tasks_lock = threading.Lock()
+_gen_pool: Optional[ThreadPoolExecutor] = None
+_gen_pool_lock = threading.Lock()
+
+def _get_gen_pool() -> ThreadPoolExecutor:
+    global _gen_pool
+    with _gen_pool_lock:
+        if _gen_pool is None:
+            _gen_pool = ThreadPoolExecutor(max_workers=MAX_PARALLEL_GENERATIONS,
+                                           thread_name_prefix="generation")
+    return _gen_pool
+
+def submit_generation_task(task_id: str, title: str, fn) -> bool:
+    """
+    提交后台生成任务。fn(on_text) 在工作线程执行；on_text(piece) 用于流式回传正文
+    片段，on_text(None) 表示即将重试、界面应清空。同一 task_id 运行中时忽略重复提交。
+    """
+    with _tasks_lock:
+        existing = _tasks.get(task_id)
+        if existing and existing["status"] == "running":
+            return False
+        _tasks[task_id] = {"title": title, "status": "running", "text": "",
+                           "error": None, "started": time.time()}
+
+    def _on_text(piece):
+        with _tasks_lock:
+            t = _tasks.get(task_id)
+            if t is None or t["status"] != "running":
+                return
+            if piece is None:
+                t["text"] = ""
+            else:
+                t["text"] += piece
+
+    def _runner():
+        try:
+            result = fn(_on_text)
+            if result and str(result).strip():
+                with _tasks_lock:
+                    t = _tasks.get(task_id)
+                    if t is not None:
+                        t["status"] = "done"
+                        t["text"] = str(result)
+            else:
+                raise RuntimeError("返回空正文")
+        except Exception as e:
+            with _tasks_lock:
+                t = _tasks.get(task_id)
+                if t is not None:
+                    t["status"] = "error"
+                    t["error"] = str(e)[:150]
+            print(f"❌ 后台任务[{task_id}]失败: {str(e)[:120]}")
+
+    _get_gen_pool().submit(_runner)
+    return True
+
+def get_generation_task(task_id: str) -> Optional[dict]:
+    """读取任务快照（拷贝），供界面轮询渲染"""
+    with _tasks_lock:
+        t = _tasks.get(task_id)
+        return dict(t) if t else None
 
 # ================= 18. 交互式输入（命令行模式） =================
 def interactive_mode():

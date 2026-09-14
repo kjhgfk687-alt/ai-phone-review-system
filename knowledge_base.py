@@ -107,10 +107,10 @@ class PhoneKnowledgeBase:
                     result["screen_type_desc"] = desc
                     break
 
-        # 亮度指南
+        # 亮度指南（取峰值=字符串内最大数值）
         if brightness:
             brightness_guide = displays.get("brightness_guide", {})
-            brightness_num = self._extract_number(brightness)
+            brightness_num = self._extract_max_number(brightness)
             if brightness_num:
                 for key, desc in brightness_guide.items():
                     if "以上" in key and brightness_num >= self._extract_number(key):
@@ -134,10 +134,10 @@ class PhoneKnowledgeBase:
         battery = self.knowledge.get("battery", {})
         result = {}
 
-        # 电池容量指南
+        # 电池容量指南（取最大数值，兼容"额定6840/典型7025"写法）
         if capacity:
             capacity_guide = battery.get("capacity_guide", {})
-            cap_num = self._extract_number(capacity)
+            cap_num = self._extract_max_number(capacity)
             if cap_num:
                 for key, desc in capacity_guide.items():
                     if "以上" in key and cap_num >= self._extract_number(key):
@@ -152,10 +152,10 @@ class PhoneKnowledgeBase:
                             result["capacity_desc"] = desc
                             break
 
-        # 有线充电指南
+        # 有线充电指南（取最大瓦数，兼容"兼容67W，最大80W"写法）
         if charging:
             charging_guide = battery.get("charging_guide", {})
-            charge_num = self._extract_number(charging)
+            charge_num = self._extract_max_number(charging)
             if charge_num:
                 for key, desc in charging_guide.items():
                     if "以上" in key and charge_num >= self._extract_number(key):
@@ -170,10 +170,10 @@ class PhoneKnowledgeBase:
                             result["charging_desc"] = desc
                             break
 
-        # 无线充电指南
+        # 无线充电指南（取最大瓦数）
         if wireless_charging:
             wireless_guide = battery.get("wireless_charging_guide", {})
-            wireless_num = self._extract_number(wireless_charging)
+            wireless_num = self._extract_max_number(wireless_charging)
             if wireless_num:
                 for key, desc in wireless_guide.items():
                     if "以上" in key and wireless_num >= self._extract_number(key):
@@ -372,6 +372,20 @@ class PhoneKnowledgeBase:
             numbers = re.findall(r'\d+\.?\d*', text)
             if numbers:
                 return float(numbers[0])
+        except:
+            pass
+        return None
+
+    def _extract_max_number(self, text: str) -> Optional[float]:
+        """从文本中提取最大的数字。
+        亮度/电池/充电等字段常含多个数值（如"默认最高800尼特；激发最高1800尼特"），
+        对分级解读有意义的是其中的峰值（最大值），取第一个数字会误判。"""
+        if not text:
+            return None
+        try:
+            numbers = re.findall(r'\d+\.?\d*', text)
+            if numbers:
+                return max(float(n) for n in numbers)
         except:
             pass
         return None
