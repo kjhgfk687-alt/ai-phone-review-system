@@ -7,6 +7,7 @@ import re
 import time
 import os
 import hashlib
+import base64
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Any, List, Optional, Callable, Tuple
@@ -49,6 +50,7 @@ DISABLE_THINKING = os.environ.get("DISABLE_THINKING", "1") != "0"
 # 评测/建议/对比的后台生成并发数
 MAX_PARALLEL_GENERATIONS = int(os.environ.get("MAX_PARALLEL_GENERATIONS", "3"))
 CACHE_DIR = os.path.join(BASE_DIR, "cache")
+IMAGE_CACHE_DIR = os.path.join(CACHE_DIR, "images")
 
 client = OpenAI(api_key=EXTRACT_API_KEY or "sk-not-configured", base_url="https://api.deepseek.com")
 review_client = OpenAI(api_key=REVIEW_API_KEY or "sk-not-configured", base_url="https://api.deepseek.com")
@@ -86,15 +88,15 @@ def clear_cache() -> int:
     return removed
 
 # ================= 3. 抓取本地 Jina Reader 数据（带重试） =================
-def fetch_markdown(url: str, max_retries: int = 2) -> Optional[str]:
-    """抓取网页内容，失败自动重试"""
+def fetch_markdown(url: str, max_retries: int = 2, timeout: int = 60) -> Optional[str]:
+    """抓取网页内容，失败自动重试；timeout 可调（型号验证等场景用短超时快速失败）"""
     reader_url = f"{JINA_READER_URL.rstrip('/')}/{url}"
     headers = {"X-Respond-With": "markdown"}
 
     for attempt in range(1, max_retries + 1):
         try:
             print(f"正在抓取网页: {url} ...")
-            res = requests.get(reader_url, headers=headers, timeout=60)
+            res = requests.get(reader_url, headers=headers, timeout=timeout)
             res.raise_for_status()
             res.encoding = 'utf-8'
             if len(res.text.strip()) > 200:
@@ -109,9 +111,10 @@ def fetch_markdown(url: str, max_retries: int = 2) -> Optional[str]:
 # ================= 4. LLM 调用封装（带重试与退避） =================
 def call_llm(client_obj, prompt: str, *, temperature: float = 0.1, timeout: int = 120,
              max_tokens: int = 8000, json_mode: bool = True, tag: str = "LLM调用",
-             disable_thinking: bool = False) -> str:
+             disable_thinking: bool = False, max_retries: Optional[int] = None) -> str:
     last_error = None
-    for attempt in range(1, API_MAX_RETRIES + 1):
+    attempts = max_retries if max_retries is not None else API_MAX_RETRIES
+    for attempt in range(1, attempts + 1):
         try:
             kwargs = dict(
                 model=MODEL_NAME,
@@ -137,19 +140,33 @@ def call_llm(client_obj, prompt: str, *, temperature: float = 0.1, timeout: int 
             # 认证类错误重试无意义，直接抛出并给出可读提示
             if "401" in msg or "Authentication" in msg or "api_key" in msg.lower():
                 raise RuntimeError("API 认证失败：请检查 .env 中的 DEEPSEEK_API_KEY 是否正确") from e
-            if attempt < API_MAX_RETRIES:
+            if attempt < attempts:
                 wait = min(2 ** attempt, 8)
                 print(f"⚠️ {tag} 第 {attempt} 次失败：{msg[:80]}，{wait} 秒后重试...")
                 time.sleep(wait)
-    raise RuntimeError(f"{tag}连续 {API_MAX_RETRIES} 次失败：{str(last_error)[:100]}")
+    raise RuntimeError(f"{tag}连续 {attempts} 次失败：{str(last_error)[:100]}")
 
 def _stream_text(client_obj, prompt: str, *, temperature: float, timeout: int,
-                 max_tokens: int, tag: str, on_text: Callable, disable_thinking: bool) -> str:
+                 max_tokens: int, tag: str, on_text: Callable,
+                 disable_thinking: bool, image_paths: Optional[List[str]] = None) -> str:
     """流式生成纯文本：逐 chunk 只取 delta.content（思考流 reasoning_content 不展示，
-    通过 on_text 实时回传给界面），返回完整正文。"""
+    通过 on_text 实时回传给界面），返回完整正文。
+    image_paths 提供时走多模态路径（本地图片转 base64 dataURL，实测 webp 可用）。"""
+    if image_paths:
+        parts = [{"type": "text", "text": prompt}]
+        for p in image_paths:
+            ext = os.path.splitext(p)[1].lower().lstrip('.')
+            mime = {"webp": "image/webp", "png": "image/png"}.get(ext, "image/jpeg")
+            with open(p, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode()
+            parts.append({"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}})
+        messages = [{"role": "user", "content": parts}]
+    else:
+        messages = [{"role": "user", "content": prompt}]
+
     kwargs = dict(
         model=MODEL_NAME,
-        messages=[{"role": "user", "content": prompt}],
+        messages=messages,
         temperature=temperature,
         timeout=timeout,
         max_tokens=max_tokens,
@@ -171,10 +188,12 @@ def _stream_text(client_obj, prompt: str, *, temperature: float, timeout: int,
 def call_llm_text(client_obj, prompt: str, *, temperature: float = 0.5, timeout: int = 180,
                   max_tokens: int = 8000, tag: str = "文本生成", attempts: int = 2,
                   on_text: Optional[Callable] = None,
-                  disable_thinking: bool = DISABLE_THINKING) -> Optional[str]:
+                  disable_thinking: bool = DISABLE_THINKING,
+                  image_paths: Optional[List[str]] = None) -> Optional[str]:
     """
     生成纯文本（评测等，非JSON）。
     - on_text 提供时走流式路径，正文片段实时回调（用于界面逐步显示）；
+    - image_paths 提供时走多模态路径（图片+文本一起输入）；
     - 空正文（思考耗尽额度等静默失败）会清空已回传文本后软重试；
     - 默认关闭模型思考（评测类长文本实测提速约一半，质量由结构化摘要保证）。
     """
@@ -185,7 +204,8 @@ def call_llm_text(client_obj, prompt: str, *, temperature: float = 0.5, timeout:
                 content = _stream_text(client_obj, prompt, temperature=temperature,
                                        timeout=timeout, max_tokens=max_tokens,
                                        tag=tag, on_text=on_text,
-                                       disable_thinking=disable_thinking)
+                                       disable_thinking=disable_thinking,
+                                       image_paths=image_paths)
             else:
                 content = call_llm(client_obj, prompt, temperature=temperature,
                                    timeout=timeout, max_tokens=max_tokens,
@@ -1108,6 +1128,148 @@ def generate_personalized_advice(phone_name: str, params: dict, knowledge_summar
                              max_tokens=8000, tag="个性化建议", on_text=on_text)
     except Exception as e:
         print(f"生成个性化建议失败: {str(e)[:100]}")
+        return None
+
+# ================= 17.7 产品图提取与外观分析（V1.4 功能②） =================
+def _validate_image_bytes(content: bytes) -> Optional[str]:
+    """
+    校验图片字节可用并返回真实扩展名；不可用返回 None。
+    防 CDN 错误页（text/html 但 >3000 字节）与 AVIF 等 PIL/视觉API不支持的
+    容器格式混入（修复 st.image 的 UnidentifiedImageError 事故）。
+    """
+    if content[:4] == b'RIFF' and content[8:12] == b'WEBP':
+        ext = 'webp'
+    elif content[:8] == b'\x89PNG\r\n\x1a\n':
+        ext = 'png'
+    elif content[:2] == b'\xff\xd8':
+        ext = 'jpg'
+    else:
+        return None  # avif/heic 等其它容器：PIL 常不识别，视觉 API 也不保证支持
+    try:
+        from PIL import Image
+        import io as _io
+        with Image.open(_io.BytesIO(content)) as im:
+            im.verify()
+    except ImportError:
+        pass  # 无 Pillow 环境（纯CLI）退化为魔数判断
+    except Exception:
+        return None
+    return ext
+
+def _open_valid_image(path: str) -> Optional[str]:
+    """PIL 校验已有图片文件；坏文件（旧版本落盘的）删除并返回 None 自愈"""
+    try:
+        from PIL import Image
+        with Image.open(path) as im:
+            im.verify()
+        return path
+    except ImportError:
+        return path  # 无 Pillow：信任扩展名
+    except Exception:
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+        return None
+
+def extract_product_images(spec_url: str, max_images: int = 4) -> List[dict]:
+    """
+    从参数页 URL 推导产品主图页并提取真产品图。
+    实验（2026-09-14）：OPPO 主图页 284 张含机型 slug 图；KV 海报等非产品图
+    通过 URL 关键字排除（kv/banner/logo/icon/svg）。图片落盘 cache/images/ 复用。
+    返回 [{path, url, alt}]。
+    """
+    landing = re.sub(r'/specs/?$', '/', str(spec_url).strip())
+    md = load_cache(landing, "page")
+    if not (md and md.get("text")):
+        report_md = fetch_markdown(landing)
+        if not report_md:
+            print(f"⚠️ 主图页抓取失败：{landing}")
+            return []
+        save_cache(landing, "page", {"url": landing, "text": report_md})
+        md_text = report_md
+    else:
+        md_text = md["text"]
+
+    # 机型 slug = 主图页 URL 最后一个路径段（如 find-x9s-pro）
+    segments = [s for s in landing.split('/') if s]
+    slug = segments[-1].lower() if segments else ""
+    if not slug:
+        return []
+
+    pairs = re.findall(r'!\[([^\]]*)\]\((https?://[^)\s]+?)\)', md_text)
+    seen, picked = set(), []
+    for alt, u in pairs:
+        ul = u.lower()
+        if slug not in ul:
+            continue
+        if any(x in ul for x in ("kv", "banner", "logo", "icon", ".svg")):
+            continue
+        if u in seen:
+            continue
+        seen.add(u)
+        picked.append((alt.strip(), u))
+        if len(picked) >= max_images:
+            break
+
+    origin = '/'.join(landing.split('/')[:3])
+    os.makedirs(IMAGE_CACHE_DIR, exist_ok=True)
+    out = []
+    for alt, u in picked:
+        prefix = os.path.join(IMAGE_CACHE_DIR, hashlib.md5(u.encode()).hexdigest()[:16])
+        # 复用缓存（坏文件自动删除视为未缓存——自愈旧版本落盘的问题文件）
+        cached_path = None
+        for ext in (".webp", ".png", ".jpg"):
+            if os.path.exists(prefix + ext):
+                cached_path = _open_valid_image(prefix + ext)
+                if cached_path:
+                    break
+        if not cached_path:
+            try:
+                img = requests.get(u, headers={"Referer": origin}, timeout=30)
+                ct = img.headers.get("Content-Type", "")
+                if img.status_code != 200 or not ct.startswith("image/"):
+                    print(f"⚠️ 跳过非图片响应（{ct or '无类型'}）：{u[:60]}")
+                    continue
+                ext = _validate_image_bytes(img.content)
+                if not ext:
+                    print(f"⚠️ 跳过无法识别的图片内容（可能是AVIF等格式）：{u[:60]}")
+                    continue
+                cached_path = prefix + "." + ext
+                with open(cached_path, "wb") as f:
+                    f.write(img.content)
+            except Exception as e:
+                print(f"⚠️ 图片下载失败：{str(e)[:60]}")
+                continue
+        out.append({"path": cached_path, "url": u, "alt": alt})
+    print(f"🖼️ 产品图提取：候选 {len(picked)}，成功 {len(out)}")
+    return out
+
+def generate_appearance_analysis(phone_name: str, images: List[dict],
+                                 user_profile: Optional[dict] = None,
+                                 on_text: Optional[Callable] = None) -> Optional[str]:
+    """
+    基于官方渲染图的外观分析（多模态）。
+    图片中可能混有纯文字海报——要求模型只基于手机本体图分析，全无则如实说明。
+    """
+    image_paths = [im["path"] for im in images]
+    alt_note = "；".join(f"图{i + 1}「{im['alt'][:20]}」" for i, im in enumerate(images) if im.get("alt"))
+    profile_block = _build_profile_block(user_profile)
+
+    prompt = f"""
+    你是客观中立的产品外观解说员。以下是 {phone_name} 官网产品页的 {len(image_paths)} 张图片
+    （{alt_note or '无替代文字'}）。注意：其中可能混有纯文字艺术海报等非产品图，
+    请只基于真正展示手机本体的图片进行分析；若没有任何展示手机本体的图，直接如实说明。
+    如手机本体图存在，输出 150-250 字：整体形态与尺寸观感 → 配色与材质工艺 → 影像模组设计 → 细节亮点。
+    要求：客观中立、不吹捧；开头注明（基于官方渲染图，非真机实拍）；直接输出正文，无思考过程。
+    {profile_block}
+    """
+    try:
+        return call_llm_text(review_client, prompt, temperature=0.4, timeout=180,
+                             max_tokens=8000, tag="外观分析", on_text=on_text,
+                             image_paths=image_paths)
+    except Exception as e:
+        print(f"外观分析失败: {str(e)[:100]}")
         return None
 
 # ================= 18. 后台生成任务管理（评测/建议/对比并行化） =================

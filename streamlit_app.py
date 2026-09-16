@@ -11,10 +11,12 @@ from concurrent.futures import ThreadPoolExecutor
 sys.path.append(os.path.dirname(__file__))
 from cshi import (
     extract_single_phone, generate_review, generate_comparison,
-    generate_personalized_advice, KEY_TRANSLATION, clear_cache,
+    generate_personalized_advice, generate_appearance_analysis,
+    extract_product_images, KEY_TRANSLATION, clear_cache,
     MAX_PARALLEL_URLS, EXTRACT_API_KEY,
     submit_generation_task, get_generation_task
 )
+from model_finder import find_model_candidates, confirm_mapping
 
 # 页面配置
 st.set_page_config(
@@ -283,10 +285,50 @@ def task_fragment(task_id: str, header: str, download_name: str = None):
         st.error(f"{t['title']} 生成失败：{t['error']}（可重试）")
 
 # ================= 输入与提取 =================
+# ---- 按型号自动查找（V1.4 功能①） ----
+with st.expander("🔎 按型号自动查找参数页（不知道URL？输入型号即可）", expanded=False):
+    model_query = st.text_input(
+        "手机型号",
+        placeholder="如：OPPO Find X9s Pro / Find X9s Pro / 红米 K90",
+        key="model_query"
+    )
+    if st.button("🔍 查找参数页", disabled=not (model_query or "").strip()):
+        with st.status(f"正在查找「{model_query.strip()}」...", expanded=True) as search_status:
+            def s_progress(p, msg):
+                search_status.update(label=msg)
+            try:
+                cands = find_model_candidates(model_query.strip(), progress=s_progress)
+            except Exception as e:
+                cands = []
+                st.error(f"查找出错：{str(e)[:120]}")
+            search_status.update(
+                label=f"查找完成：{len(cands)} 个有效候选" if cands else "查找完成：未找到匹配的参数页",
+                state="complete" if cands else "error", expanded=cands == []
+            )
+        st.session_state["model_candidates"] = cands
+        st.session_state["model_candidates_for"] = model_query.strip()
+
+    cands = st.session_state.get("model_candidates") or []
+    if cands:
+        st.caption(f"「{st.session_state.get('model_candidates_for', '')}」的候选（按匹配度排序，确认后映射会缓存）：")
+        for i, c in enumerate(cands):
+            cc1, cc2, cc3 = st.columns([4, 2, 1])
+            cc1.markdown(f"**{c['matched_name']}**（{c['how']}）")
+            cc1.caption(c["url"][:90])
+            cc2.progress(min(c["confidence"], 1.0), text=f"匹配度 {c['confidence']:.0%}")
+            if cc3.button("✅ 用这个", key=f"use_cand_{i}", use_container_width=True):
+                confirm_mapping(st.session_state.get("model_candidates_for", ""), c["url"])
+                st.session_state["url_input_box"] = c["url"]
+                st.toast("已填入 URL 并保存型号映射缓存 ✅")
+                st.rerun()
+    elif st.session_state.get("model_candidates") is not None and not cands:
+        st.info("没有匹配度足够的候选。可尝试：补上品牌名（如“OPPO Find X9s Pro”）后重新查找，或直接粘贴 URL。")
+
 url_input = st.text_area(
     "输入手机参数页URL（每行一个）",
     height=100,
-    placeholder="https://www.oppo.com/cn/smartphones/series-find-x/find-x9s-pro/specs/"
+    placeholder="https://www.oppo.com/cn/smartphones/series-find-x/find-x9s-pro/specs/",
+    key="url_input_box"
 )
 
 if st.button("🚀 开始提取", type="primary"):
@@ -409,7 +451,7 @@ if st.session_state.phones:
 
         # 操作行：提交后台生成任务（点击即返回，界面不锁，可同时生成多部）
         profile = st.session_state.get("user_profile")
-        action_col1, action_col2, action_col3 = st.columns(3)
+        action_col1, action_col2, action_col3, action_col4 = st.columns(4)
 
         if action_col1.button(f"📝 生成评测：{name}", key=f"review_{phone_id}"):
             accepted = submit_generation_task(
@@ -433,8 +475,39 @@ if st.session_state.phones:
             st.toast("建议已开始后台生成 🚀" if accepted
                      else "该建议已在生成中，请稍候", icon="🚀")
 
+        if action_col3.button("🎨 外观分析", key=f"appear_{phone_id}",
+                              help="基于官网产品页渲染图的多模态分析"):
+            with st.status("🖼️ 正在从产品主图页提取产品图...", expanded=True) as img_status:
+                try:
+                    images = extract_product_images(phone['url'], max_images=4)
+                except Exception as e:
+                    images = []
+                    st.error(f"图片提取出错：{str(e)[:100]}")
+                img_status.update(
+                    label=f"提取到 {len(images)} 张产品图" if images else "主图页未找到产品图",
+                    state="complete" if images else "error", expanded=False
+                )
+            if not images:
+                st.warning("该机型的产品主图页未提取到手机本体图，暂不支持外观分析。可稍后重试。")
+            else:
+                thumb_cols = st.columns(min(len(images), 4))
+                for tc, im in zip(thumb_cols, images):
+                    try:
+                        tc.image(im["path"], use_container_width=True,
+                                 caption=(im.get("alt") or "产品图")[:18])
+                    except Exception:
+                        tc.caption("图片预览失败")
+                st.caption("图片来源：品牌官网产品页，版权归品牌方所有，此处仅作评测参考引用。")
+                accepted = submit_generation_task(
+                    f"appear_{phone_id}", f"{name} 的外观分析",
+                    lambda cb, p=phone, ims=images: generate_appearance_analysis(
+                        p["phone_name"], ims, profile, on_text=cb)
+                )
+                st.toast("外观分析已开始后台生成 🚀" if accepted
+                         else "该外观分析已在生成中，请稍候", icon="🚀")
+
         params_json = json.dumps(phone['params'], ensure_ascii=False, indent=2)
-        action_col3.download_button(
+        action_col4.download_button(
             "⬇️ 下载参数 JSON",
             data=params_json,
             file_name=f"{safe_name}_params.json",
@@ -447,6 +520,8 @@ if st.session_state.phones:
         task_fragment(f"review_{phone_id}", "📝 专业评测", f"{safe_name}_评测.md")
         task_fragment(f"advice_{phone_id}", "🎯 个性化选购建议（依据左侧用户画像）",
                       f"{safe_name}_个性化建议.md")
+        task_fragment(f"appear_{phone_id}", "🎨 外观分析（基于官方渲染图，非真机实拍）",
+                      f"{safe_name}_外观分析.md")
 
         st.markdown("---")
 
