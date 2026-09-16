@@ -17,6 +17,8 @@ from cshi import (
     submit_generation_task, get_generation_task
 )
 from model_finder import find_model_candidates, confirm_mapping
+from registry import stats as registry_stats, all_phones as registry_phones, upsert as registry_upsert
+from resolvers import BRAND_ADAPTERS
 
 # 页面配置
 st.set_page_config(
@@ -44,17 +46,25 @@ if "user_profile" not in st.session_state:
 # ================= 侧边栏 =================
 with st.sidebar:
     st.header("⚙️ 设置")
-    use_cache = st.checkbox("启用缓存（同一 URL 秒出结果）", value=True)
-    st.caption("缓存目录：`cache/`，可在下方手动清空")
+    # 双视图：访客视图干净无调试元素；演示者视图暴露维护工具（部署版只开访客视图）
+    presenter_mode = st.toggle("🔧 演示者模式", value=False,
+                               help="开启后显示机型注册表、冲突明细、缓存与密钥状态等维护工具")
+    st.session_state["presenter_mode"] = presenter_mode
 
-    if st.button("🗑️ 清空全部结果", use_container_width=True):
-        st.session_state.phones = []
-        # 正在后台生成的任务不中断，完成后结果因手机列表已清空而不再展示
-        st.rerun()
-
-    if st.button("🧹 清除缓存", use_container_width=True):
-        removed = clear_cache()
-        st.toast(f"已清除 {removed} 个缓存文件", icon="🧹")
+    if presenter_mode:
+        use_cache = st.checkbox("启用缓存（同一 URL 秒出结果）", value=True)
+        st.caption("缓存目录：`cache/`，可在下方手动清空")
+        if st.button("🗑️ 清空全部结果", use_container_width=True):
+            st.session_state.phones = []
+            st.rerun()
+        if st.button("🧹 清除缓存", use_container_width=True):
+            removed = clear_cache()
+            st.toast(f"已清除 {removed} 个缓存文件", icon="🧹")
+    else:
+        use_cache = True
+        if st.button("🗑️ 清空全部结果", use_container_width=True):
+            st.session_state.phones = []
+            st.rerun()
 
     # ---- 用户画像（个性化推荐的独立 UI 块，位置可整体迁移） ----
     st.divider()
@@ -88,23 +98,24 @@ with st.sidebar:
         st.session_state.user_profile = None
 
     st.divider()
-    # API Key 配置状态检查（避免误把认证失败当成余额问题）
-    key_ok = EXTRACT_API_KEY and not EXTRACT_API_KEY.startswith("sk-你的") \
-        and EXTRACT_API_KEY != "sk-not-configured"
-    if key_ok:
-        st.success("API Key 已配置 ✅", icon="🔑")
-    else:
-        st.error(
-            "API Key 未配置 ❌\n\n"
-            "请把真实的 DeepSeek Key 填入项目根目录 `.env` 的 `DEEPSEEK_API_KEY=` 一行，"
-            "保存后重启程序。当前提取功能无法使用。",
-            icon="🔑"
+    # API Key 配置状态检查（演示者工具；访客视图不暴露开发细节）
+    if presenter_mode:
+        key_ok = EXTRACT_API_KEY and not EXTRACT_API_KEY.startswith("sk-你的") \
+            and EXTRACT_API_KEY != "sk-not-configured"
+        if key_ok:
+            st.success("API Key 已配置 ✅", icon="🔑")
+        else:
+            st.error(
+                "API Key 未配置 ❌\n\n"
+                "请把真实的 DeepSeek Key 填入项目根目录 `.env` 的 `DEEPSEEK_API_KEY=` 一行，"
+                "保存后重启程序。当前提取功能无法使用。",
+                icon="🔑"
+            )
+        st.caption(
+            "使用前提：\n\n"
+            "1. 本地 Jina Reader 已启动（默认 `http://127.0.0.1:3001/`）\n\n"
+            "2. 项目根目录 `.env` 已配置 `DEEPSEEK_API_KEY`"
         )
-    st.caption(
-        "使用前提：\n\n"
-        "1. 本地 Jina Reader 已启动（默认 `http://127.0.0.1:3001/`）\n\n"
-        "2. 项目根目录 `.env` 已配置 `DEEPSEEK_API_KEY`"
-    )
 
 # ================= 展示辅助函数 =================
 CATEGORY_ICONS = {
@@ -311,15 +322,18 @@ with st.expander("🔎 按型号自动查找参数页（不知道URL？输入型
     cands = st.session_state.get("model_candidates") or []
     if cands:
         st.caption(f"「{st.session_state.get('model_candidates_for', '')}」的候选（按匹配度排序，确认后映射会缓存）：")
+        how_badge = {"已收录": "📚 已收录", "模板直配": "⚡ 模板直配", "搜索": "🔎 搜索验证",
+                     "直配": "⚡ 模板直配", "缓存": "📚 已收录"}
         for i, c in enumerate(cands):
             cc1, cc2, cc3 = st.columns([4, 2, 1])
-            cc1.markdown(f"**{c['matched_name']}**（{c['how']}）")
+            badge = how_badge.get(c["how"], c["how"])
+            cc1.markdown(f"**{c['matched_name']}**（{badge}）")
             cc1.caption(c["url"][:90])
             cc2.progress(min(c["confidence"], 1.0), text=f"匹配度 {c['confidence']:.0%}")
             if cc3.button("✅ 用这个", key=f"use_cand_{i}", use_container_width=True):
                 confirm_mapping(st.session_state.get("model_candidates_for", ""), c["url"])
                 st.session_state["url_input_box"] = c["url"]
-                st.toast("已填入 URL 并保存型号映射缓存 ✅")
+                st.toast("已填入 URL 并保存到机型注册表 ✅")
                 st.rerun()
     elif st.session_state.get("model_candidates") is not None and not cands:
         st.info("没有匹配度足够的候选。可尝试：补上品牌名（如“OPPO Find X9s Pro”）后重新查找，或直接粘贴 URL。")
@@ -442,12 +456,17 @@ if st.session_state.phones:
             with st.expander("📚 专业知识解读", expanded=False):
                 display_knowledge_summary(phone['knowledge_summary'], st)
 
-        # 完整参数：分类标签页 + 双栏；冲突明细独立表格
+        # 完整参数：分类标签页 + 双栏；冲突明细仅演示者视图展示（访客视图保持干净）
+        presenter = st.session_state.get("presenter_mode", False)
         conflict_count = len(phone.get('conflicts', []))
-        expander_title = f"🔍 完整参数" + (f"（{conflict_count} 处冲突 ⚠️）" if conflict_count else "")
+        if presenter and conflict_count:
+            expander_title = f"🔍 完整参数（{conflict_count} 处冲突 ⚠️）"
+        else:
+            expander_title = "🔍 完整参数"
         with st.expander(expander_title, expanded=False):
             render_params_tabs(st, phone['params'])
-            render_conflicts_table(st, phone.get('conflicts', []))
+            if presenter:
+                render_conflicts_table(st, phone.get('conflicts', []))
 
         # 操作行：提交后台生成任务（点击即返回，界面不锁，可同时生成多部）
         profile = st.session_state.get("user_profile")
@@ -555,3 +574,44 @@ if len(st.session_state.phones) >= 2:
                  else "对比评测已在生成中，请稍候", icon="🚀")
 
     task_fragment("comparison", "🔍 对比评测", "手机对比评测.md")
+
+# ================= 机型注册表（演示者视图：可视化 + 手动补录） =================
+if st.session_state.get("presenter_mode"):
+    st.markdown("---")
+    st.subheader("🗂️ 机型注册表")
+    st.caption("数据驱动的核心：确认过的型号→参数页映射都在这里，长尾特例降维成一条数据。"
+               "文件：`phone_registry.yaml`（人工可维护），未来 RAG 的语料资产底座。")
+
+    s = registry_stats()
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("已收录机型", s["total"])
+    m2.metric("覆盖品牌", s["brands"])
+    m3.metric("RAG 待入库", s["rag_pending"])
+    m4.metric("确认来源数", sum(s["by_source"].values()))
+
+    with st.expander("📋 注册表明细", expanded=False):
+        rows = [{
+            "型号": p.get("model", ""),
+            "品牌": p.get("brand", ""),
+            "来源": p.get("source", ""),
+            "最近验证": p.get("verified_at") or "未验证",
+            "参数页": (p.get("spec_url") or "待补录")[:60],
+        } for p in registry_phones()]
+        st.dataframe(rows, use_container_width=True, hide_index=True)
+
+    with st.expander("➕ 手动补录机型", expanded=False):
+        m_model = st.text_input("型号", key="reg_model",
+                                placeholder="如：小米17T（官方名或常用叫法）")
+        m_url = st.text_input("参数页 URL", key="reg_url",
+                              placeholder="https://...")
+        m_brand = st.selectbox("品牌", list(BRAND_ADAPTERS.keys()))
+        m_alias = st.text_input("别名（可选，逗号分隔）", key="reg_alias",
+                                placeholder="如：Xiaomi 17T, 17T")
+        if st.button("📥 录入注册表"):
+            if m_model.strip() and m_url.strip():
+                aliases = [a.strip() for a in m_alias.split(",") if a.strip()]
+                registry_upsert(m_model.strip(), m_url.strip(), brand=m_brand,
+                                aliases=aliases or None, source="manual")
+                st.success(f"已录入「{m_model.strip()}」✅ 该型号此后查找将直接命中注册表")
+            else:
+                st.error("型号和 URL 都不能为空")

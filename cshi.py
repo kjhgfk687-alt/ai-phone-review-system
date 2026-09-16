@@ -224,8 +224,10 @@ def call_llm_text(client_obj, prompt: str, *, temperature: float = 0.5, timeout:
     return None
 
 # ================= 5. 自动识别手机名称 =================
-def extract_phone_name(markdown_text: str, url: str) -> str:
-    """从网页内容中自动识别手机名称"""
+def extract_phone_name(markdown_text: str, url: str, url_fallback: bool = True) -> str:
+    """从网页内容中自动识别手机名称。
+    url_fallback=False 时识别失败返回空串（不回退到 URL 推断）——
+    验证闭环场景必须用此模式：模板 URL 由输入拼出，回退名必然与输入循环自证。"""
     prompt = f"""
     从以下手机官网的Markdown内容中识别手机的品牌和完整型号名称。
 
@@ -244,14 +246,17 @@ def extract_phone_name(markdown_text: str, url: str) -> str:
 
     try:
         content = call_llm(client, prompt, temperature=0.1, timeout=60,
-                           max_tokens=1000, tag="型号识别")
+                           max_tokens=1000, tag="型号识别",
+                           disable_thinking=True)
         result = json.loads(content)
         full_name = result.get("full_name", "未知手机")
         print(f"✅ 识别到手机：{full_name}")
         return full_name
     except Exception as e:
-        print(f"⚠️ 识别失败（{str(e)[:60]}），从URL提取名称")
-        return extract_name_from_url(url)
+        print(f"⚠️ 识别失败（{str(e)[:60]}）")
+        if url_fallback:
+            return extract_name_from_url(url)
+        return ""
 
 def extract_name_from_url(url: str) -> str:
     """从URL中提取可能的手机名称"""
@@ -1174,12 +1179,14 @@ def _open_valid_image(path: str) -> Optional[str]:
 
 def extract_product_images(spec_url: str, max_images: int = 4) -> List[dict]:
     """
-    从参数页 URL 推导产品主图页并提取真产品图。
-    实验（2026-09-14）：OPPO 主图页 284 张含机型 slug 图；KV 海报等非产品图
-    通过 URL 关键字排除（kv/banner/logo/icon/svg）。图片落盘 cache/images/ 复用。
+    从参数页 URL 推导产品主图页并提取真产品图（V2.0：品牌感知，走适配器）。
+    图片落盘 cache/images/ 复用；经魔数+PIL 双重校验，坏格式自动跳过。
     返回 [{path, url, alt}]。
     """
-    landing = re.sub(r'/specs/?$', '/', str(spec_url).strip())
+    from resolvers import match_brand_by_host, landing_from_spec, image_exclude_words
+    spec_url = str(spec_url).strip()
+    brand = match_brand_by_host(spec_url.split('/')[2] if spec_url.count('/') >= 2 else '')
+    landing = landing_from_spec(spec_url, brand)
     md = load_cache(landing, "page")
     if not (md and md.get("text")):
         report_md = fetch_markdown(landing)
@@ -1197,13 +1204,14 @@ def extract_product_images(spec_url: str, max_images: int = 4) -> List[dict]:
     if not slug:
         return []
 
+    exclude = image_exclude_words(brand)
     pairs = re.findall(r'!\[([^\]]*)\]\((https?://[^)\s]+?)\)', md_text)
     seen, picked = set(), []
     for alt, u in pairs:
         ul = u.lower()
         if slug not in ul:
             continue
-        if any(x in ul for x in ("kv", "banner", "logo", "icon", ".svg")):
+        if any(x in ul for x in exclude):
             continue
         if u in seen:
             continue

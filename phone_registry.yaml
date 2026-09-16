@@ -1,0 +1,234 @@
+version: 2
+updated_at: '2026-09-17'
+phones:
+- model: vivox100
+  aliases: []
+  brand: vivo
+  spec_url: https://www.vivo.com.cn/vivo/param/x100
+  landing_url: ''
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: OPPO Find X9s Pro 卫星通信版
+  aliases:
+  - Find X9s Pro
+  brand: OPPO
+  spec_url: https://www.oppo.com/cn/smartphones/series-find-x/find-x9s-pro/specs/
+  landing_url: https://www.oppo.com/cn/smartphones/series-find-x/find-x9s-pro/
+  keywords:
+  - 天玑9500
+  - 四频北斗
+  - 7025mAh
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-13'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: OPPO Find X9 Ultra
+  aliases:
+  - Find X9 Ultra
+  brand: OPPO
+  spec_url: https://www.oppo.com/cn/smartphones/series-find-x/find-x9-ultra/specs/
+  landing_url: https://www.oppo.com/cn/smartphones/series-find-x/find-x9-ultra/
+  keywords:
+  - 骁龙8至尊版
+  - 三频北斗
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-14'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: vivo X200
+  aliases:
+  - X200
+  brand: vivo
+  spec_url: https://www.vivo.com.cn/vivo/x200/
+  landing_url: https://www.vivo.com.cn/vivo/x200/
+  keywords:
+  - 天玑9400
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-15'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: Redmi K70
+  aliases:
+  - K70
+  brand: Redmi
+  spec_url: https://www.mi.com/redmi-k70
+  landing_url: https://www.mi.com/redmi-k70
+  keywords:
+  - 骁龙8 Gen3
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-15'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 小米17T
+  aliases:
+  - 小米17T
+  - 17T Pro
+  brand: 小米
+  spec_url: https://www.mi.com/global/xiaomi-17t/
+  landing_url: ''
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 小米17
+  aliases: []
+  brand: 小米
+  spec_url: ''
+  landing_url: ''
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: null
+  rag:
+    corpus_status: pending
+  source: pending
+  note: 自动采集未达置信度（0%）
+- model: 小米15
+  aliases: []
+  brand: 小米
+  spec_url: ''
+  landing_url: ''
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: null
+  rag:
+    corpus_status: pending
+  source: pending
+  note: 自动采集未达置信度（0%）
+- model: 红米 K80
+  aliases: []
+  brand: Redmi
+  spec_url: ''
+  landing_url: ''
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: null
+  rag:
+    corpus_status: pending
+  source: pending
+  note: 自动采集未达置信度（0%）
+- model: OPPO Reno14
+  aliases:
+  - OPPO Reno14
+  brand: OPPO
+  spec_url: https://www.oppo.com/cn/smartphones/series-reno14/reno14/specs/
+  landing_url: https://www.oppo.com/cn/smartphones/series-reno14/reno14/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: OPPO Find X9
+  aliases:
+  - OPPO Find X9
+  brand: OPPO
+  spec_url: https://www.oppo.com/cn/smartphones/series-find/find-x9/specs/
+  landing_url: https://www.oppo.com/cn/smartphones/series-find/find-x9/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: vivo X200 Pro
+  aliases:
+  - vivo X200 Pro
+  brand: vivo
+  spec_url: https://www.vivo.com.cn/vivo/param/x200pro
+  landing_url: ''
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: vivo X300
+  aliases:
+  - vivo X300
+  brand: vivo
+  spec_url: https://www.vivo.com.cn/vivo/param/x300
+  landing_url: ''
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 荣耀 Magic7
+  aliases:
+  - 荣耀 Magic7
+  brand: 荣耀
+  spec_url: https://www.honor.cn/magic7/specs/
+  landing_url: https://www.honor.cn/magic7/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 一加 13
+  aliases:
+  - 一加 13
+  brand: 一加
+  spec_url: https://www.oneplus.cn/13/specs
+  landing_url: https://www.oneplus.cn/13/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 华为 Mate 70
+  aliases:
+  - 华为 Mate 70
+  brand: 华为
+  spec_url: https://consumer.huawei.com/cn/phones/mate-70/specs/
+  landing_url: https://consumer.huawei.com/cn/phones/mate-70/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
