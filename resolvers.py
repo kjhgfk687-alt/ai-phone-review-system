@@ -9,8 +9,8 @@ from typing import Dict, List, Optional
 # 归一化时把中文品牌词翻成英文，修复"红米k70"vs"Redmi K70"脚本不等价问题
 CANONICAL_BRAND_WORDS = {
     "红米": "redmi", "小米": "xiaomi", "华为": "huawei", "荣耀": "honor",
-    "一加": "oneplus", "真我": "realme", "三星": "samsung", "苹果": "apple",
-    "魅族": "meizu", "摩托罗拉": "motorola", "欧珀": "oppo",
+    "一加": "oneplus", "真我": "realme", "三星": "samsung",
+    "苹果": "iphone", "魅族": "meizu", "摩托罗拉": "motorola", "欧珀": "oppo",
 }
 
 def normalize_model(s: str) -> str:
@@ -178,6 +178,21 @@ BRAND_ADAPTERS: Dict[str, dict] = {
         "landing_from_spec": "strip_specs",
         "image_exclude": ["kv", "banner", "logo", "icon", ".svg"],
         "spec_markers": ["specs", "spec", "param"],
+    },
+    "苹果": {
+        # 实测（2026-09-17 探针）：Apple 中国官网规格页模式 /{slug}/specs/
+        # slug 保留 iphone 前缀（iphone-17-pro）；canonical 已把"苹果"映射为 iphone
+        "keywords": ["iphone", "苹果"],
+        "domains": ["www.apple.com.cn"],
+        "search_brand": "iPhone",
+        "slug_rule": "dash",
+        "slug_strip": [],
+        "spec_templates": [
+            "https://www.apple.com.cn/{slug}/specs/",
+        ],
+        "landing_from_spec": "strip_specs",
+        "image_exclude": ["kv", "banner", "logo", "icon", ".svg"],
+        "spec_markers": ["specs"],
     },
 }
 

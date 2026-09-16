@@ -403,3 +403,87 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+- model: iPhone 17 Pro Max
+  aliases:
+  - iPhone 17 Pro Max
+  brand: 苹果
+  spec_url: https://www.apple.com.cn/iphone-17-pro-max/specs/
+  landing_url: https://www.apple.com.cn/iphone-17-pro-max/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: iPhone 17
+  aliases:
+  - iPhone 17
+  brand: 苹果
+  spec_url: https://www.apple.com.cn/iphone-17/specs/
+  landing_url: https://www.apple.com.cn/iphone-17/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: iPhone 17 Air
+  aliases:
+  - iPhone 17 Air
+  brand: 苹果
+  spec_url: https://www.apple.com.cn/iphone-17-air/specs/
+  landing_url: https://www.apple.com.cn/iphone-17-air/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: iPhone 16 Pro Max
+  aliases:
+  - iPhone 16 Pro Max
+  brand: 苹果
+  spec_url: https://www.apple.com.cn/iphone-16-pro-max/specs/
+  landing_url: https://www.apple.com.cn/iphone-16-pro-max/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: iPhone 16
+  aliases:
+  - iPhone 16
+  brand: 苹果
+  spec_url: https://www.apple.com.cn/iphone-16/specs/
+  landing_url: https://www.apple.com.cn/iphone-16/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: iPhone 16e
+  aliases:
+  - iPhone 16e
+  brand: 苹果
+  spec_url: https://www.apple.com.cn/iphone-16-e/specs/
+  landing_url: https://www.apple.com.cn/iphone-16-e/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
