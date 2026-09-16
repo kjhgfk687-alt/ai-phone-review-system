@@ -95,44 +95,44 @@ phones:
 - model: 小米17
   aliases: []
   brand: 小米
-  spec_url: ''
-  landing_url: ''
+  spec_url: https://www.mi.com/prod/xiaomi-17/specs
+  landing_url: https://www.mi.com/prod/xiaomi-17/
   keywords: []
   sources: []
   added_at: '2026-09-17'
   updated_at: '2026-09-17'
-  verified_at: null
+  verified_at: '2026-09-17'
   rag:
     corpus_status: pending
-  source: pending
+  source: confirmed
   note: 自动采集未达置信度（0%）
 - model: 小米15
   aliases: []
   brand: 小米
-  spec_url: ''
-  landing_url: ''
+  spec_url: https://www.mi.com/prod/xiaomi-15/specs
+  landing_url: https://www.mi.com/prod/xiaomi-15/
   keywords: []
   sources: []
   added_at: '2026-09-17'
   updated_at: '2026-09-17'
-  verified_at: null
+  verified_at: '2026-09-17'
   rag:
     corpus_status: pending
-  source: pending
+  source: confirmed
   note: 自动采集未达置信度（0%）
 - model: 红米 K80
   aliases: []
   brand: Redmi
-  spec_url: ''
-  landing_url: ''
+  spec_url: https://www.mi.com/prod/redmi-k80/specs
+  landing_url: https://www.mi.com/prod/redmi-k80/
   keywords: []
   sources: []
   added_at: '2026-09-17'
   updated_at: '2026-09-17'
-  verified_at: null
+  verified_at: '2026-09-17'
   rag:
     corpus_status: pending
-  source: pending
+  source: confirmed
   note: 自动采集未达置信度（0%）
 - model: OPPO Reno14
   aliases:

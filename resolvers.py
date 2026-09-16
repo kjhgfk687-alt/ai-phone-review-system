@@ -80,14 +80,15 @@ BRAND_ADAPTERS: Dict[str, dict] = {
         "domains": ["www.mi.com"],
         "search_brand": "小米",
         "slug_rule": "dash",
-        "slug_strip": [],   # 品牌词 xiaomi 保留在 slug 里（真实 URL：mi.com/xiaomi-17t）
+        "slug_strip": [],   # 品牌词 xiaomi 保留在 slug 里（真实 URL：mi.com/prod/xiaomi-15/specs）
         "spec_templates": [
+            "https://www.mi.com/prod/{slug}/specs",   # 新商城模式（2026-09-17 用户反馈确认）
             "https://www.mi.com/{slug}",
             "https://www.mi.com/{slug}/specs",
         ],
         "landing_from_spec": "strip_specs",
         "image_exclude": ["kv", "banner", "logo", "icon", ".svg"],
-        "spec_markers": ["specs", "spec", "param"],
+        "spec_markers": ["specs", "spec", "param", "prod"],
     },
     "Redmi": {
         "keywords": ["redmi", "红米"],
@@ -96,12 +97,13 @@ BRAND_ADAPTERS: Dict[str, dict] = {
         "slug_rule": "dash",
         "slug_strip": ["redmi", "红米"],
         "spec_templates": [
+            "https://www.mi.com/prod/redmi-{slug}/specs",   # 新商城模式（用户实测确认）
             "https://www.mi.com/redmi-{slug}",
             "https://www.mi.com/redmi-{slug}/specs",
         ],
         "landing_from_spec": "strip_specs",
         "image_exclude": ["kv", "banner", "logo", "icon", ".svg"],
-        "spec_markers": ["specs", "spec", "param"],
+        "spec_markers": ["specs", "spec", "param", "prod"],
     },
     "荣耀": {
         "keywords": ["honor", "荣耀"],
