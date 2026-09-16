@@ -232,3 +232,174 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+- model: iQOO 15
+  aliases: []
+  brand: iQOO
+  spec_url: https://www.vivo.com.cn/vivo/param/iqoo15
+  landing_url: ''
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: manual
+  note: 自动采集未达置信度（76%）
+- model: iQOO Neo10
+  aliases: []
+  brand: iQOO
+  spec_url: https://www.iqoo.com/iqoo/neo10/
+  landing_url: ''
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+  note: 自动采集未达置信度（85%）
+- model: vivo X300 Ultra
+  aliases:
+  - vivo X300 Ultra
+  brand: vivo
+  spec_url: https://www.vivo.com.cn/vivo/x300ultra/
+  landing_url: ''
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 荣耀 Magic8
+  aliases:
+  - 荣耀 Magic8
+  brand: 荣耀
+  spec_url: https://www.honor.cn/magic8/specs/
+  landing_url: https://www.honor.cn/magic8/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 荣耀 400 Pro
+  aliases:
+  - 荣耀 400 Pro
+  brand: 荣耀
+  spec_url: https://www.honor.cn/400-pro/specs/
+  landing_url: https://www.honor.cn/400-pro/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 一加 15
+  aliases:
+  - 一加 15
+  brand: 一加
+  spec_url: https://www.oneplus.cn/15/specs
+  landing_url: https://www.oneplus.cn/15/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 华为 Pura 80
+  aliases:
+  - 华为 Pura 80
+  brand: 华为
+  spec_url: https://consumer.huawei.com/cn/phones/pura-80/specs/
+  landing_url: https://consumer.huawei.com/cn/phones/pura-80/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 真我 GT8 Pro
+  aliases:
+  - GT8 Pro
+  brand: 真我
+  spec_url: https://www.realme.com/cn/realme-gt-8-pro/specs
+  landing_url: ''
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: manual
+  note: 自动采集未达置信度（0%）
+- model: 三星 Galaxy S26
+  aliases:
+  - Galaxy S26
+  - S26
+  brand: 三星
+  spec_url: https://www.samsung.com/hk/smartphones/galaxy-s26/specs/
+  landing_url: ''
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: manual
+  note: 自动采集未达置信度（50%）
+- model: OPPO Reno15
+  aliases:
+  - OPPO Reno15
+  brand: OPPO
+  spec_url: https://www.oppo.com/cn/smartphones/series-reno15/reno15/specs/
+  landing_url: https://www.oppo.com/cn/smartphones/series-reno15/reno15/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: Redmi K90
+  aliases:
+  - Redmi K90
+  brand: Redmi
+  spec_url: https://www.mi.com/prod/redmi-k90/specs
+  landing_url: https://www.mi.com/prod/redmi-k90/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 小米 Civi 5 Pro
+  aliases:
+  - 小米 Civi 5 Pro
+  brand: 小米
+  spec_url: https://www.mi.com/prod/xiaomi-civi-5-pro/specs
+  landing_url: https://www.mi.com/prod/xiaomi-civi-5-pro/
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed

@@ -63,13 +63,15 @@ BRAND_ADAPTERS: Dict[str, dict] = {
         "spec_markers": ["param", "spec"],
     },
     "iQOO": {
+        # 实测（2026-09-17 用户URL）：iQOO 产品页在 vivo.com.cn 的 /vivo/param/ 路径下
         "keywords": ["iqoo"],
-        "domains": ["www.iqoo.com"],
+        "domains": ["www.vivo.com.cn", "www.iqoo.com"],
         "search_brand": "iQOO",
         "slug_rule": "concat",
-        "slug_strip": ["iqoo"],
+        "slug_strip": [],
         "spec_templates": [
-            "https://www.iqoo.com/iqoo/{slug}/",
+            "https://www.vivo.com.cn/vivo/param/{slug}",
+            "https://www.vivo.com.cn/vivo/{slug}/",
         ],
         "landing_from_spec": None,
         "image_exclude": ["kv", "banner", "logo", "icon", ".svg"],
@@ -145,12 +147,15 @@ BRAND_ADAPTERS: Dict[str, dict] = {
         "spec_markers": ["specs", "spec", "param"],
     },
     "真我": {
+        # 实测（2026-09-17 用户URL）：域名 realme.com/cn，slug 含品牌词且
+        # 型号内字母数字边界拆横杠（GT8 Pro → realme-gt-8-pro）
         "keywords": ["realme", "真我"],
-        "domains": ["www.realme.com.cn"],
+        "domains": ["www.realme.com", "www.realme.com.cn"],
         "search_brand": "真我",
         "slug_rule": "dash",
-        "slug_strip": ["realme", "真我"],
+        "slug_strip": [],
         "spec_templates": [
+            "https://www.realme.com/cn/{slug}/specs",
             "https://www.realme.com.cn/{slug}/specs",
         ],
         "landing_from_spec": "strip_specs",
@@ -158,17 +163,21 @@ BRAND_ADAPTERS: Dict[str, dict] = {
         "spec_markers": ["specs", "spec", "param"],
     },
     "三星": {
+        # 实测（2026-09-17 用户URL）：区域路径 /hk/（大陆站 /cn/ 常无产品页），
+        # slug 保留 galaxy，参数页后缀 specs
         "keywords": ["samsung", "三星", "galaxy"],
         "domains": ["www.samsung.com"],
         "search_brand": "三星",
         "slug_rule": "dash",
-        "slug_strip": ["samsung", "三星", "galaxy"],
+        "slug_strip": ["samsung", "三星"],
         "spec_templates": [
+            "https://www.samsung.com/hk/smartphones/{slug}/specs/",
+            "https://www.samsung.com/cn/smartphones/{slug}/specs/",
             "https://www.samsung.com/cn/smartphones/{slug}/spec/",
         ],
         "landing_from_spec": "strip_specs",
         "image_exclude": ["kv", "banner", "logo", "icon", ".svg"],
-        "spec_markers": ["spec", "param"],
+        "spec_markers": ["specs", "spec", "param"],
     },
 }
 
@@ -222,7 +231,14 @@ def build_spec_urls(model_input: str, brand: Optional[str]) -> List[str]:
     if not slug or not re.fullmatch(r'[a-z0-9-]+', slug):
         return []
     series = slug.rsplit('-', 1)[0] if '-' in slug else slug
-    return [tpl.format(slug=slug, series=series) for tpl in ad.get("spec_templates", [])]
+    urls = [tpl.format(slug=slug, series=series) for tpl in ad.get("spec_templates", [])]
+    # 字母数字边界变体：GT8→gt-8、X9S→x-9s 这类官网分词差异的兜底
+    # （真我 GT8 Pro 实测 slug 为 realme-gt-8-pro）
+    alt = re.sub(r'(?<=[a-z])(?=\d)|(?<=\d)(?=[a-z])', '-', slug)
+    if alt != slug:
+        urls += [tpl.format(slug=alt, series=alt.rsplit('-', 1)[0] if '-' in alt else alt)
+                 for tpl in ad.get("spec_templates", [])]
+    return urls
 
 def landing_from_spec(url: str, brand: Optional[str]) -> str:
     """参数页 URL → 产品主图页 URL（按适配器规则，未收录品牌走通用规则）"""
