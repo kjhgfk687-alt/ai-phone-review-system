@@ -260,6 +260,33 @@ def display_knowledge_summary(summary, container):
     container.subheader("📚 专业知识解读")
     container.markdown("".join(parts), unsafe_allow_html=True)
 
+# ---- 后台生成任务的轮询渲染（fragment 自动刷新） ----
+@st.fragment(run_every="0.8s")
+def task_fragment(task_id: str, header: str, download_name: str = None):
+    """轮询渲染后台生成任务：运行中显示耗时与流式正文（0.8s 粒度，观感接近逐字），
+    完成显示结果与下载。模型输出的 ### 标题降级为 #### 配合紧凑 CSS。"""
+    t = get_generation_task(task_id)
+    if not t:
+        return
+    text = t["text"].replace("\n### ", "\n#### ") if t["text"] else ""
+    if t["status"] == "running":
+        elapsed = time.time() - t["started"]
+        extra = f"，正文已到 {len(text)} 字" if text else ""
+        st.info(f"⏳ {t['title']} 生成中… 已用 {elapsed:.0f} 秒{extra}")
+        if text:
+            st.markdown(text)
+    elif t["status"] == "done":
+        st.markdown(f"**{header}**")
+        st.markdown(text)
+        if download_name:
+            st.download_button(
+                "⬇️ 下载（Markdown）", data=t["text"],
+                file_name=download_name, mime="text/markdown",
+                key=f"dl_{task_id}"
+            )
+    else:
+        st.error(f"{t['title']} 生成失败：{t['error']}（可重试）")
+
 # ================= 输入与提取 =================
 # ---- 按型号自动查找（V1.4 功能①） ----
 with st.expander("🔎 按型号自动查找参数页（不知道URL？输入型号即可）", expanded=False):
