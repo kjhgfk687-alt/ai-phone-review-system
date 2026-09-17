@@ -17,6 +17,24 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOCS_DIR = os.path.join(BASE_DIR, "knowledge", "docs")
 PARAMS_DIR = os.path.join(BASE_DIR, "knowledge", "params")
 INDEX_PATH = os.path.join(BASE_DIR, "knowledge", "rag_index.json")
+VECTORS_PATH = os.path.join(BASE_DIR, "knowledge", "vectors.json")
+# rag 独立加载 .env（不依赖 cshi 的加载顺序；已存在的环境变量不覆盖）
+def _load_env():
+    env_path = os.path.join(BASE_DIR, ".env")
+    try:
+        with open(env_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, _, v = line.partition("=")
+                    os.environ.setdefault(k.strip(), v.strip())
+    except FileNotFoundError:
+        pass
+
+_load_env()
+EMBEDDING_API_KEY = os.environ.get("EMBEDDING_API_KEY", "")
+EMBEDDING_BASE_URL = os.environ.get("EMBEDDING_BASE_URL", "https://api.siliconflow.cn/v1")
+EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "BAAI/bge-m3")
 
 K1, B = 1.5, 0.75          # BM25 参数
 CHUNK_MAX = 420             # 语料块目标长度（字符）
@@ -168,16 +186,86 @@ def build_corpus() -> List[Dict]:
         d["doc_id"] = i
     return docs
 
+# ==================== 向量化（稠密召回，可选） ====================
+_emb_warned = False
+
+def _embed_texts(texts):
+    """批量调用 embedding API（硅基流动 bge-m3）；失败返回 None"""
+    import requests
+    global _emb_warned
+    if not EMBEDDING_API_KEY:
+        if not _emb_warned:
+            print("ℹ️ 未配置 EMBEDDING_API_KEY，稠密召回关闭（纯 BM25 模式）")
+            _emb_warned = True
+        return None
+    vectors = []
+    B = 32
+    for i in range(0, len(texts), B):
+        batch = texts[i:i + B]
+        try:
+            r = requests.post(EMBEDDING_BASE_URL + "/embeddings",
+                              headers={"Authorization": "Bearer " + EMBEDDING_API_KEY,
+                                       "Content-Type": "application/json"},
+                              json={"model": EMBEDDING_MODEL, "input": batch},
+                              timeout=60)
+            if r.status_code != 200:
+                print("⚠️ embedding 接口错误：HTTP " + str(r.status_code) + " " + r.text[:80])
+                return None
+            data = r.json()["data"]
+            vectors.extend(e["embedding"] for e in sorted(data, key=lambda x: x["index"]))
+        except Exception as e:
+            print("⚠️ embedding 调用失败：" + str(e)[:80])
+            return None
+    return vectors
+
+def _vector_cache():
+    try:
+        with open(VECTORS_PATH, encoding="utf-8") as f:
+            d = json.load(f)
+        if d.get("model") == EMBEDDING_MODEL:
+            return d
+    except Exception:
+        pass
+    return {"model": EMBEDDING_MODEL, "vectors": {}}
+
+def _save_vector_cache(cache):
+    try:
+        os.makedirs(os.path.dirname(VECTORS_PATH), exist_ok=True)
+        with open(VECTORS_PATH, "w", encoding="utf-8") as f:
+            json.dump(cache, f)
+    except Exception as e:
+        print("⚠️ 向量缓存写入失败：" + str(e)[:60])
+
+def _embed_chunks(chunks):
+    """语料块向量化：优先复用缓存，仅对新增/变更文本调用 API"""
+    cache = _vector_cache()
+    vectors_map = cache.get("vectors", {})
+    texts = [c["text"] for c in chunks]
+    import hashlib
+    keys = [hashlib.md5(t.encode("utf-8")).hexdigest() for t in texts]
+    missing = [(k, t) for k, t in zip(keys, texts) if k not in vectors_map]
+    if missing:
+        print("🧠 向量化：新增/变更 " + str(len(missing)) + " 块...")
+        new_vecs = _embed_texts([t for _, t in missing])
+        if new_vecs is None:
+            return None
+        for (k, _), v in zip(missing, new_vecs):
+            vectors_map[k] = v
+        cache["vectors"] = vectors_map
+        _save_vector_cache(cache)
+    return [vectors_map.get(k) for k in keys]
+
 # ==================== 索引（BM25） ====================
 def _build_index() -> Dict:
     docs = build_corpus()
     chunks = []
     for d in docs:
-        for j, block in enumerate(_chunks_from_text(d["text"])):
+        for block in _chunks_from_text(d["text"]):
             chunks.append({
                 "doc_id": d["doc_id"], "title": d["title"], "source": d["source"],
                 "date": d.get("date", ""), "file": d.get("file", ""),
-                "chunk_idx": j, "text": block,
+                # chunk_idx 必须全局唯一（文档内序号会碰撞，曾致 RRF 融合桶塌缩）
+                "chunk_idx": len(chunks), "text": block,
             })
     doc_tokens = [tokenize(c["text"]) for c in chunks]
     doc_len = [len(t) for t in doc_tokens]
@@ -195,6 +283,7 @@ def _build_index() -> Dict:
         "avg_len": avg_len,
         "df": df,
         "n": len(chunks),
+        "vectors": (_embed_chunks(chunks) if chunks else None),
     }
     try:
         os.makedirs(os.path.dirname(INDEX_PATH), exist_ok=True)
@@ -235,6 +324,8 @@ def get_index(force_rebuild: bool = False) -> Dict:
                     for t in set(toks):
                         disk["df"][t] = disk["df"].get(t, 0) + 1
                 disk["n"] = len(disk["chunks"])
+                disk["vectors"] = (_embed_chunks(disk["chunks"])
+                                   if EMBEDDING_API_KEY and disk["chunks"] else None)
                 _index_cache = disk
                 return _index_cache
         except Exception:
@@ -278,15 +369,62 @@ def search(query: str, top_k: int = 4, boost_model: str = None) -> List[Dict]:
             if len(bt) >= 2 and bt in text_l:
                 score += 1.5
                 break
-        scored.append({**chunk, "score": round(score, 3)})
-    scored.sort(key=lambda x: -x["score"])
+        scored.append({**chunk, "bm25": round(score, 3)})
+
+    # ---- 稠密召回：问题向量化 vs 语料向量余弦（未配 Key 时自动跳过） ----
+    dense = []
+    dense_pairs = []
+    if EMBEDDING_API_KEY and idx.get("vectors"):
+        try:
+            import requests as _rq
+            qv_r = _rq.post(EMBEDDING_BASE_URL + "/embeddings",
+                            headers={"Authorization": "Bearer " + EMBEDDING_API_KEY,
+                                     "Content-Type": "application/json"},
+                            json={"model": EMBEDDING_MODEL, "input": [query]},
+                            timeout=30)
+            if qv_r.status_code == 200:
+                qv = qv_r.json()["data"][0]["embedding"]
+                def _cos(a, b):
+                    dot = sum(x * y for x, y in zip(a, b))
+                    na = math.sqrt(sum(x * x for x in a)) or 1.0
+                    nb = math.sqrt(sum(y * y for y in b)) or 1.0
+                    return dot / (na * nb)
+                dense_pairs = [(_cos(qv, vec), chunk) for vec, chunk in zip(idx["vectors"], idx["chunks"]) if vec]
+                dense_pairs.sort(key=lambda x: -x[0])
+        except Exception as e:
+            print("⚠️ 稠密召回失败（退回纯 BM25）：" + str(e)[:60])
+
+    # ---- RRF 融合（两路排名，k=60） ----
+    fused = {}
+    bm25_ranked = sorted(scored, key=lambda x: -x["bm25"])[:20]
+    for rank, item in enumerate(bm25_ranked):
+        f = fused.setdefault(item["chunk_idx"], {"chunk": item, "s": 0.0})
+        f["s"] += 1.0 / (60 + rank + 1)
+    for rank, (score, chunk) in enumerate(dense_pairs[:20]):
+        f = fused.setdefault(chunk["chunk_idx"], {"chunk": {**chunk, "bm25": 0.0, "cos": score}, "s": 0.0})
+        f["s"] += 1.0 / (60 + rank + 1)
+        f["cos"] = max(f.get("cos", 0.0), score)   # 记录该块最高语义相似度，用于同分决胜
+
+    results = []
+    from resolvers import normalize_model as _norm
+    boost_flat = _norm(boost_model or "")
+    for f in fused.values():
+        chunk = f["chunk"]
+        text_l = chunk["text"].lower()
+        bonus = 0.0
+        if boost_flat:
+            flat = re.sub(r'[^0-9a-z一-鿿]+', '', text_l)
+            bonus = 2.0 if boost_flat in flat else 0.0
+        results.append({**chunk, "score": round(f["s"] + bonus, 3)})
+
+    results.sort(key=lambda x: (-x["score"], -x.get("cos", 0.0)))
     seen_titles = set()
     out = []
-    for c in scored:
-        key = (c["title"], c["chunk_idx"])
-        if key in seen_titles:
+    for c in results:
+        key2 = (c["title"], c["chunk_idx"])
+        if key2 in seen_titles:
             continue
-        seen_titles.add(key)
+        seen_titles.add(key2)
         out.append(c)
         if len(out) >= top_k:
             break
@@ -317,4 +455,5 @@ def rag_stats() -> Dict:
     for d in docs:
         by_source[d.get("source", "未知")] = by_source.get(d.get("source", "未知"), 0) + 1
     return {"docs": len(docs), "chunks": idx.get("n", 0),
-            "built_at": idx.get("built_at", ""), "by_source": by_source}
+            "built_at": idx.get("built_at", ""), "by_source": by_source,
+            "vector_ready": bool(EMBEDDING_API_KEY and idx.get("vectors"))}

@@ -27,7 +27,7 @@ from scoring import score_phone
 import rag
 from knowledge_store import load_params as kb_load_params
 import os as _os
-DEV_PASSWORD = _os.environ.get("DEV_PASSWORD", "shumaceping")
+DEV_PASSWORD = _os.environ.get("DEV_PASSWORD", "")  # 默认为空：开发者模式须在 .env 配置 DEV_PASSWORD
 
 # 页面配置
 st.set_page_config(
@@ -84,14 +84,17 @@ with st.sidebar:
                 st.session_state["dev_unlocked"] = False
                 st.rerun()
         else:
-            _pwd = st.text_input("访问密码", type="password", key="dev_pwd",
-                                 placeholder="仅开发者需要")
-            if st.button("🔓 解锁", use_container_width=True):
-                if _pwd == DEV_PASSWORD:
-                    st.session_state["dev_unlocked"] = True
-                    st.rerun()
-                else:
-                    st.error("密码错误")
+            if not DEV_PASSWORD:
+                st.warning("服务器未配置 DEV_PASSWORD，开发者模式不可用")
+            else:
+                _pwd = st.text_input("访问密码", type="password", key="dev_pwd",
+                                     placeholder="仅开发者需要")
+                if st.button("🔓 解锁", use_container_width=True):
+                    if _pwd == DEV_PASSWORD:
+                        st.session_state["dev_unlocked"] = True
+                        st.rerun()
+                    else:
+                        st.error("密码错误")
 
     if dev_unlocked:
         use_cache = st.checkbox("启用缓存（同一 URL 秒出结果）", value=True)

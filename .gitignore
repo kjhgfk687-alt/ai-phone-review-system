@@ -8,3 +8,4 @@ output/
 .DS_Store
 ceshi/
 cache/
+knowledge/vectors.json
