@@ -76,7 +76,7 @@ with st.sidebar:
     st.header("⚙️ 设置")
     # 双视图：访客视图干净无调试元素；开发者选项（密码门）暴露维护工具
     dev_unlocked = st.session_state.get("dev_unlocked", False)
-    with st.expander("🛠️ 开发者选项", expanded=dev_unlocked):
+    with st.expander("🛠️ 开发者模式", expanded=dev_unlocked):
         if dev_unlocked:
             st.success("已解锁，维护工具可见")
             if st.button("🔒 锁定并隐藏维护工具", use_container_width=True):
@@ -354,52 +354,52 @@ def appearance_fragment(task_id: str, phone_id: str, safe_name: str):
 
 # ================= 输入与提取 =================
 # ---- 按型号自动查找（V1.4 功能①） ----
-tab_model, tab_url = st.tabs(["🔎 按型号查询（推荐）", "🧑‍💻 高级：按参数页 URL 提取"])
-
-with tab_model:
-    st.caption("主航道：优先从本地参数知识库直取完整参数（秒回、离线可用）；未收录机型自动经注册表 / 官网模板 / 搜索定位。")
-    model_query = st.text_input(
-        "手机型号",
-        placeholder="如：小米15 / iPhone 17 Pro / vivo X200 / 红米 K90",
-        key="model_query"
-    )
-    if st.button("🔍 查询该机型", type="primary", disabled=not (model_query or "").strip()):
-        q = model_query.strip()
-        # ① 参数知识库直取（主力路径）
-        kb_hit = kb_load_params(q)
-        if kb_hit and kb_hit.get("params"):
-            params = kb_hit["params"]
-            pname = kb_hit.get("model") or q
-            if any(p["phone_name"] == pname for p in st.session_state.phones):
-                st.info(f"「{pname}」已在本次结果列表中，可直接查看。")
-            else:
-                st.session_state.phones.append({
-                    "id": uuid.uuid4().hex,
-                    "url": kb_hit.get("spec_url") or "",
-                    "phone_name": pname,
-                    "params": params,
-                    "knowledge_summary": params.get("_knowledge_summary"),
-                    "conflicts": params.get("_conflicts", []),
-                    "tags": params.get("_tags", []),
-                })
-            st.success(f"⚡ 知识库命中「{pname}」，已直接载入完整参数（无需联网提取）")
-            st.session_state["model_candidates"] = None
+st.caption("主航道：优先从本地参数知识库直取完整参数（秒回、离线可用）；未收录机型自动经注册表 / 官网模板 / 搜索定位。")
+model_query = st.text_input(
+    "手机型号",
+    placeholder="如：小米15 / iPhone 17 Pro / vivo X200 / 红米 K90",
+    key="model_query"
+)
+if st.button("🔍 检索", type="primary"):
+    q = (model_query or "").strip()
+    if not q:
+        st.warning("请先输入手机型号")
+        st.stop()
+    # ① 参数知识库直取（主力路径）
+    kb_hit = kb_load_params(q)
+    if kb_hit and kb_hit.get("params"):
+        params = kb_hit["params"]
+        pname = kb_hit.get("model") or q
+        if any(p["phone_name"] == pname for p in st.session_state.phones):
+            st.info(f"「{pname}」已在本次结果列表中，可直接查看。")
         else:
-            # ② 未命中：注册表/模板/搜索 定位管线
-            with st.status(f"正在查找「{q}」...", expanded=True) as search_status:
-                def s_progress(p2, msg):
-                    search_status.update(label=msg)
-                try:
-                    cands = find_model_candidates(q, progress=s_progress)
-                except Exception as e:
-                    cands = []
-                    st.error(f"查找出错：{str(e)[:120]}")
-                search_status.update(
-                    label=f"查找完成：{len(cands)} 个有效候选" if cands else "查找完成：未找到匹配的参数页",
-                    state="complete" if cands else "error", expanded=cands == []
-                )
-            st.session_state["model_candidates"] = cands
-            st.session_state["model_candidates_for"] = q
+            st.session_state.phones.append({
+                "id": uuid.uuid4().hex,
+                "url": kb_hit.get("spec_url") or "",
+                "phone_name": pname,
+                "params": params,
+                "knowledge_summary": params.get("_knowledge_summary"),
+                "conflicts": params.get("_conflicts", []),
+                "tags": params.get("_tags", []),
+            })
+        st.success(f"⚡ 知识库命中「{pname}」，已直接载入完整参数")
+        st.session_state["model_candidates"] = None
+    else:
+        # ② 未命中：注册表/模板/搜索 定位管线
+        with st.status(f"正在查找「{q}」...", expanded=True) as search_status:
+            def s_progress(p2, msg):
+                search_status.update(label=msg)
+            try:
+                cands = find_model_candidates(q, progress=s_progress)
+            except Exception as e:
+                cands = []
+                st.error(f"查找出错：{str(e)[:120]}")
+            search_status.update(
+                label=f"查找完成：{len(cands)} 个有效候选" if cands else "查找完成：未找到匹配的参数页",
+                state="complete" if cands else "error", expanded=cands == []
+            )
+        st.session_state["model_candidates"] = cands
+        st.session_state["model_candidates_for"] = q
 
     cands = st.session_state.get("model_candidates") or []
     if cands:
@@ -419,19 +419,16 @@ with tab_model:
                 st.toast("已填入 URL 并保存到机型注册表 ✅")
                 st.rerun()
     elif st.session_state.get("model_candidates") is not None and not cands:
-        st.info("没有匹配度足够的候选。可尝试：补上品牌名（如“OPPO Find X9s Pro”）后重新查找，或切到 URL 页签直接粘贴。")
+        st.info("没有匹配度足够的候选。可尝试：补上品牌名后重新查找，或展开下方 URL 提取直接粘贴。")
 
-with tab_url:
-    st.caption("已知道确切参数页地址时的快捷方式；一般无需使用。")
-    url_input = st.text_area(
+with st.expander("🔗 按参数页 URL 提取（高级，一般无需使用）", expanded=False):
+    st.caption("已知道确切参数页地址时的快捷方式。")
     url_input = st.text_area(
         "输入手机参数页URL（每行一个，高级用法）",
         height=100,
         placeholder="https://www.oppo.com/cn/smartphones/series-find-x/find-x9s-pro/specs/",
         key="url_input_box"
     )
-
-)
 
 if st.button("🚀 开始提取", type="primary"):
     # 输入去重 + 过滤无效行
@@ -616,7 +613,7 @@ if st.session_state.phones:
                                   help="基于人工策展的官方渲染图进行视觉分析" if curated
                                        else "该机型暂无策展外观图"):
                 if not curated:
-                    st.warning("该机型暂无策展外观图——请在开发者选项『手动补录 / 编辑机型与外观图』中补充官方渲染图后重试。")
+                    st.warning("该机型暂无策展外观图——请在开发者模式『手动补录 / 编辑机型与外观图』中补充官方渲染图后重试。")
                 else:
                     resolved = [p2 for p2 in (resolve_image(s, '/'.join(phone['url'].split('/')[:3])) for s in curated) if p2]
                     if not resolved:
