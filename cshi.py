@@ -14,6 +14,7 @@ from typing import Dict, Any, List, Optional, Callable, Tuple
 
 from knowledge_base import PhoneKnowledgeBase
 import knowledge_store
+import rag
 from resolvers import normalize_model
 
 # ================= 1. 配置（支持 .env / 环境变量） =================
@@ -1034,6 +1035,13 @@ def generate_review(phone_name: str, params: dict, knowledge_summary,
     on_text 可选，提供时流式回传正文片段"""
     brief = _build_review_brief(phone_name, params, knowledge_summary)
     profile_block = _build_profile_block(user_profile)
+    try:
+        import rag as _rag
+        rag_block = _rag.build_context(f"{phone_name} 评测 续航 影像 性能 价格", model=phone_name, top_k=4)
+    except Exception:
+        rag_block = ""
+    _nl = chr(10)
+    rag_part = (_nl + "    【本地知识库参考资料（可引用：句末标注【来源：xx】；与参数冲突时以参数摘要为准；无相关内容则忽略）】" + _nl + "    " + rag_block + _nl) if rag_block else ""
 
     prompt = f"""
     你是一位以客观中立著称的专业手机评测编辑，请基于下面的参数摘要为 {phone_name} 撰写一篇评测。
@@ -1045,7 +1053,7 @@ def generate_review(phone_name: str, params: dict, knowledge_summary,
     4. "知识库评价"是行业通用认知，可作为专业背景引用
     5. 面向普通消费者，专业但易懂；不与其他机型对比；不带营销吹嘘语气
     6. 直接输出评测正文，不要输出任何思考过程、前言或额外说明
-{profile_block}
+{profile_block}{rag_part}
     参数摘要：
     {json.dumps(brief, ensure_ascii=False, indent=2)}
     """
@@ -1063,6 +1071,14 @@ def generate_comparison(phones_data: list, user_profile: Optional[dict] = None,
     if len(phones_data) < 2:
         return "至少需要两部手机才能进行对比。"
     profile_block = _build_profile_block(user_profile)
+    try:
+        import rag as _rag
+        _cmp_names = "、".join(p["phone_name"] for p in phones_data)
+        rag_block = _rag.build_context(f"{_cmp_names} 对比评测 优缺点", top_k=5)
+    except Exception:
+        rag_block = ""
+    _nl = chr(10)
+    rag_part = (_nl + "    【本地知识库参考资料（可引用：句末标注【来源：xx】；与参数冲突时以参数摘要为准；无相关内容则忽略）】" + _nl + "    " + rag_block + _nl) if rag_block else ""
 
     phones_brief = []
     for phone in phones_data:
@@ -1106,7 +1122,7 @@ def generate_comparison(phones_data: list, user_profile: Optional[dict] = None,
     4. 只依据给定数据，严禁编造；某项数据为"未知"时直接说明缺失，不要猜测
     5. 最后按用户群体给出推荐（如：游戏玩家/拍照用户/续航焦虑用户/预算优先），没有明显差异时如实说明
     6. 直接输出正文（Markdown），不要输出思考过程或额外说明
-{profile_block}
+{profile_block}{rag_part}
     手机信息：
     {json.dumps(phones_brief, ensure_ascii=False, indent=2)}
     """
@@ -1127,6 +1143,13 @@ def generate_personalized_advice(phone_name: str, params: dict, knowledge_summar
     """
     brief = _build_review_brief(phone_name, params, knowledge_summary)
     profile_block = _build_profile_block(user_profile)
+    try:
+        import rag as _rag
+        rag_block = _rag.build_context(f"{phone_name} 选购 建议 优缺点", model=phone_name, top_k=3)
+    except Exception:
+        rag_block = ""
+    _nl = chr(10)
+    rag_part = (_nl + "    【本地知识库参考资料（可引用：句末标注【来源：xx】；与参数冲突时以参数摘要为准；无相关内容则忽略）】" + _nl + "    " + rag_block + _nl) if rag_block else ""
 
     prompt = f"""
     你是一位务实的手机导购顾问。请根据下面的参数摘要和读者画像，为 {phone_name} 生成一份个性化选购建议。
@@ -1143,7 +1166,7 @@ def generate_personalized_advice(phone_name: str, params: dict, knowledge_summar
 
     要求：只依据摘要数据，不编造；总字数 150-300 字；直接输出正文，无思考过程、无额外说明。
     如画像中包含多部候选手机则只分析当前这一部。
-{profile_block}
+{profile_block}{rag_part}
     参数摘要：
     {json.dumps(brief, ensure_ascii=False, indent=2)}
     """

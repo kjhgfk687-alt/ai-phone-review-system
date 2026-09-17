@@ -24,6 +24,7 @@ from registry import (
 )
 from resolvers import BRAND_ADAPTERS
 from scoring import score_phone
+import rag
 from knowledge_store import load_params as kb_load_params
 import os as _os
 DEV_PASSWORD = _os.environ.get("DEV_PASSWORD", "shumaceping")
@@ -354,7 +355,7 @@ def appearance_fragment(task_id: str, phone_id: str, safe_name: str):
 
 # ================= 输入与提取 =================
 # ---- 按型号自动查找（V1.4 功能①） ----
-st.caption("主航道：优先从本地参数知识库直取完整参数（秒回、离线可用）；未收录机型自动经注册表 / 官网模板 / 搜索定位。")
+st.caption("主航道：优先从本地参数知识库直取完整参数；未收录机型自动经注册表 / 官网模板 / 搜索定位。")
 model_query = st.text_input(
     "手机型号",
     placeholder="如：小米15 / iPhone 17 Pro / vivo X200 / 红米 K90",
@@ -761,6 +762,29 @@ if st.session_state.get("dev_unlocked"):
                 st.success(msg + ("（" + "，".join(detail) + "）" if detail else ""))
             else:
                 st.error("型号和参数页 URL 都不能为空")
+
+# ================= RAG 知识库（开发者视图） =================
+if st.session_state.get("dev_unlocked"):
+    st.markdown("---")
+    st.subheader("🧠 RAG 知识库")
+    st.caption("维护方式：往 knowledge/docs/ 丢 Markdown（可带 标题/来源/日期/机型 frontmatter），点重建索引即可。"
+               "knowledge/params/ 提取参数与 phone_knowledge.yaml 策展事实自动纳入语料。")
+    _rs = rag.rag_stats()
+    _r1, _r2, _r3 = st.columns(3)
+    _r1.metric("语料文档", _rs["docs"])
+    _r2.metric("语料块", _rs["chunks"])
+    _r3.metric("索引日期", _rs["built_at"])
+    st.caption("来源分布：" + "，".join(f"{k} {v} 篇" for k, v in _rs["by_source"].items()))
+    _rb1, _rb2 = st.columns(2)
+    if _rb1.button("🔄 重建索引", use_container_width=True):
+        rag.rebuild_index()
+        st.toast("RAG 索引已重建 ✅", icon="🧠")
+    _rag_q = _rb2.text_input("检索测试", key="rag_test_q",
+                             placeholder="输入问题，查看会命中哪些语料块", label_visibility="collapsed")
+    if _rag_q.strip() and st.button("▶️ 测试检索", key="rag_test_btn"):
+        for _h in rag.search(_rag_q.strip(), top_k=4):
+            st.markdown(f"**[{_h['score']:.1f}] {_h['title']}**（{_h['source']}）")
+            st.caption(_h["text"][:150])
 
 # ================= 页脚 =================
 st.markdown("---")
