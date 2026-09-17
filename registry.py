@@ -54,6 +54,15 @@ def lookup(model_input: str) -> Optional[dict]:
             return dict(entry)
     return None
 
+def find_by_spec_url(url: str) -> Optional[dict]:
+    """按参数页/主图页 URL 反查注册表条目（外观分析取人工补充图用）"""
+    key = str(url).strip().rstrip('/')
+    for p in all_phones():
+        for u in (p.get("spec_url"), p.get("landing_url")):
+            if u and str(u).strip().rstrip('/') == key:
+                return dict(p)
+    return None
+
 def stats() -> Dict:
     """注册表统计（UI 可视化用）"""
     phones = all_phones()
@@ -78,11 +87,12 @@ def _count(phones: List[dict], field: str) -> Dict[str, int]:
 # ==================== 写入（数据飞轮） ====================
 def upsert(model: str, spec_url: str, brand: Optional[str] = None,
            landing_url: Optional[str] = None, aliases: Optional[List[str]] = None,
-           keywords: Optional[List[str]] = None,
+           keywords: Optional[List[str]] = None, images: Optional[List[str]] = None,
            source: str = "confirmed", note: str = None) -> dict:
     """
     新增或更新一条机型记录（按归一化 model 判重）。
     source: manual=手动补录 | confirmed=搜索确认 | template=模板直配 | pending=待补录
+    images: 人工补充的外观图 URL（预约页/无渲染图机型的外观分析数据源）
     """
     data = load()
     key = normalize_model(model)
@@ -98,7 +108,7 @@ def upsert(model: str, spec_url: str, brand: Optional[str] = None,
         entry = {
             "model": model, "aliases": aliases or [], "brand": brand or "",
             "spec_url": "", "landing_url": "", "keywords": keywords or [],
-            "sources": [], "added_at": now, "updated_at": now,
+            "images": [], "sources": [], "added_at": now, "updated_at": now,
             "verified_at": None, "rag": {"corpus_status": "pending"},
             "source": source,
         }
@@ -123,6 +133,12 @@ def upsert(model: str, spec_url: str, brand: Optional[str] = None,
             if k not in merged:
                 merged.append(k)
         entry["keywords"] = merged
+    if images:
+        merged = list(entry.get("images") or [])
+        for im in images:
+            if im not in merged:
+                merged.append(im)
+        entry["images"] = merged
     if note:
         entry["note"] = note
     entry["source"] = source if spec_url else entry.get("source", source)

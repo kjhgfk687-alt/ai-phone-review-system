@@ -186,7 +186,7 @@ def _stream_text(client_obj, prompt: str, *, temperature: float, timeout: int,
     return "".join(parts)
 
 def call_llm_text(client_obj, prompt: str, *, temperature: float = 0.5, timeout: int = 180,
-                  max_tokens: int = 8000, tag: str = "文本生成", attempts: int = 2,
+                  max_tokens: int = 8000, tag: str = "文本生成", attempts: int = 3,
                   on_text: Optional[Callable] = None,
                   disable_thinking: bool = DISABLE_THINKING,
                   image_paths: Optional[List[str]] = None) -> Optional[str]:
@@ -1177,6 +1177,33 @@ def _open_valid_image(path: str) -> Optional[str]:
             pass
         return None
 
+def _download_image(u: str, origin: str) -> Optional[str]:
+    """下载单张图片并校验（魔数+PIL），落盘缓存；返回本地路径或 None"""
+    prefix = os.path.join(IMAGE_CACHE_DIR, hashlib.md5(u.encode()).hexdigest()[:16])
+    # 复用缓存（坏文件自动删除视为未缓存——自愈旧版本落盘的问题文件）
+    for ext in (".webp", ".png", ".jpg"):
+        if os.path.exists(prefix + ext):
+            path = _open_valid_image(prefix + ext)
+            if path:
+                return path
+    try:
+        img = requests.get(u, headers={"Referer": origin}, timeout=30)
+        ct = img.headers.get("Content-Type", "")
+        if img.status_code != 200 or not ct.startswith("image/"):
+            print(f"⚠️ 跳过非图片响应（{ct or '无类型'}）：{u[:60]}")
+            return None
+        ext = _validate_image_bytes(img.content)
+        if not ext:
+            print(f"⚠️ 跳过无法识别的图片内容（可能是AVIF等格式）：{u[:60]}")
+            return None
+        path = prefix + "." + ext
+        with open(path, "wb") as f:
+            f.write(img.content)
+        return path
+    except Exception as e:
+        print(f"⚠️ 图片下载失败：{str(e)[:60]}")
+        return None
+
 def extract_product_images(spec_url: str, max_images: int = 4) -> List[dict]:
     """
     从参数页 URL 推导产品主图页并提取真产品图（V2.0：品牌感知，走适配器）。
@@ -1245,33 +1272,23 @@ def extract_product_images(spec_url: str, max_images: int = 4) -> List[dict]:
     os.makedirs(IMAGE_CACHE_DIR, exist_ok=True)
     out = []
     for alt, u in picked:
-        prefix = os.path.join(IMAGE_CACHE_DIR, hashlib.md5(u.encode()).hexdigest()[:16])
-        # 复用缓存（坏文件自动删除视为未缓存——自愈旧版本落盘的问题文件）
-        cached_path = None
-        for ext in (".webp", ".png", ".jpg"):
-            if os.path.exists(prefix + ext):
-                cached_path = _open_valid_image(prefix + ext)
-                if cached_path:
-                    break
-        if not cached_path:
-            try:
-                img = requests.get(u, headers={"Referer": origin}, timeout=30)
-                ct = img.headers.get("Content-Type", "")
-                if img.status_code != 200 or not ct.startswith("image/"):
-                    print(f"⚠️ 跳过非图片响应（{ct or '无类型'}）：{u[:60]}")
-                    continue
-                ext = _validate_image_bytes(img.content)
-                if not ext:
-                    print(f"⚠️ 跳过无法识别的图片内容（可能是AVIF等格式）：{u[:60]}")
-                    continue
-                cached_path = prefix + "." + ext
-                with open(cached_path, "wb") as f:
-                    f.write(img.content)
-            except Exception as e:
-                print(f"⚠️ 图片下载失败：{str(e)[:60]}")
-                continue
-        out.append({"path": cached_path, "url": u, "alt": alt})
+        path = _download_image(u, origin)
+        if path:
+            out.append({"path": path, "url": u, "alt": alt})
     print(f"🖼️ 产品图提取：候选 {len(picked)}，成功 {len(out)}")
+    return out
+
+def download_manual_images(urls: List[str], referer: str = None) -> List[dict]:
+    """下载人工补充的概念图/官方图（注册表 images 字段），复用同一校验与缓存"""
+    out = []
+    for u in urls:
+        u = str(u).strip()
+        if not u.startswith("http"):
+            continue
+        origin = '/'.join(u.split('/')[:3])
+        path = _download_image(u, referer or origin)
+        if path:
+            out.append({"path": path, "url": u, "alt": "人工补充"})
     return out
 
 def generate_appearance_analysis(phone_name: str, images: List[dict],
@@ -1352,11 +1369,14 @@ def submit_generation_task(task_id: str, title: str, fn) -> bool:
             else:
                 raise RuntimeError("返回空正文")
         except Exception as e:
+            err = str(e)
+            if "timed out" in err.lower() or "timeout" in err.lower():
+                err = "AI 服务暂时无响应（已自动重试），请稍后点击重试"
             with _tasks_lock:
                 t = _tasks.get(task_id)
                 if t is not None:
                     t["status"] = "error"
-                    t["error"] = str(e)[:150]
+                    t["error"] = err[:150]
             print(f"❌ 后台任务[{task_id}]失败: {str(e)[:120]}")
 
     _get_gen_pool().submit(_runner)

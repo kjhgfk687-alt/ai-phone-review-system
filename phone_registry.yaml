@@ -27,7 +27,7 @@ phones:
   sources: []
   added_at: '2026-09-17'
   updated_at: '2026-09-17'
-  verified_at: '2026-09-13'
+  verified_at: '2026-09-17'
   rag:
     corpus_status: pending
   source: confirmed
@@ -490,7 +490,7 @@ phones:
 - model: iqoo15ultra
   aliases:
   - iqoo15ultra
-  brand: vivo
+  brand: iQOO
   spec_url: https://www.vivo.com.cn/vivo/param/iqoo15ultra
   landing_url: ''
   keywords: []
@@ -500,4 +500,7 @@ phones:
   verified_at: '2026-09-17'
   rag:
     corpus_status: pending
-  source: confirmed
+  source: manual
+  images:
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952873128/71087008a75d630fb68baf379286c58d.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952867569/8db534fe34139d685e8b3491a246.png

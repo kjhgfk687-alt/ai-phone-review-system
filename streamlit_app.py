@@ -12,12 +12,15 @@ sys.path.append(os.path.dirname(__file__))
 from cshi import (
     extract_single_phone, generate_review, generate_comparison,
     generate_personalized_advice, generate_appearance_analysis,
-    extract_product_images, KEY_TRANSLATION, clear_cache,
+    extract_product_images, download_manual_images, KEY_TRANSLATION, clear_cache,
     MAX_PARALLEL_URLS, EXTRACT_API_KEY,
     submit_generation_task, get_generation_task
 )
 from model_finder import find_model_candidates, confirm_mapping
-from registry import stats as registry_stats, all_phones as registry_phones, upsert as registry_upsert
+from registry import (
+    stats as registry_stats, all_phones as registry_phones, upsert as registry_upsert,
+    find_by_spec_url, lookup as registry_lookup
+)
 from resolvers import BRAND_ADAPTERS
 
 # 页面配置
@@ -458,14 +461,23 @@ if st.session_state.phones:
 
         if action_col3.button("🎨 外观分析", key=f"appear_{phone_id}",
                               help="基于官网产品页渲染图的多模态分析"):
-            with st.status("🖼️ 正在从产品主图页提取产品图...", expanded=True) as img_status:
+            with st.status("🖼️ 正在准备外观图（人工补充图优先）...", expanded=True) as img_status:
+                images = []
                 try:
-                    images = extract_product_images(phone['url'], max_images=4)
+                    entry = find_by_spec_url(phone['url']) or registry_lookup(phone['phone_name'])
+                    manual_urls = (entry or {}).get("images") or []
+                    if manual_urls:
+                        # Referer 用机型参数页的站点源，防 CDN 防盗链拦截
+                        referer = '/'.join(phone['url'].split('/')[:3])
+                        images = download_manual_images(manual_urls, referer=referer)
+                    if not images:
+                        images = extract_product_images(phone['url'], max_images=4)
                 except Exception as e:
                     images = []
-                    st.error(f"图片提取出错：{str(e)[:100]}")
+                    st.error(f"图片准备出错：{str(e)[:100]}")
+                src_label = "人工补充图" if any((entry or {}).get("images") for _ in [0]) and images else "产品主图页"
                 img_status.update(
-                    label=f"提取到 {len(images)} 张产品图" if images else "主图页未找到产品图",
+                    label=f"准备到 {len(images)} 张外观图（{src_label}）" if images else "未找到可用外观图",
                     state="complete" if images else "error", expanded=False
                 )
             if not images:
@@ -569,11 +581,17 @@ if st.session_state.get("presenter_mode"):
         m_brand = st.selectbox("品牌", list(BRAND_ADAPTERS.keys()))
         m_alias = st.text_input("别名（可选，逗号分隔）", key="reg_alias",
                                 placeholder="如：Xiaomi 17T, 17T")
+        m_images = st.text_area("外观图 URL（可选，多张换行/逗号分隔）", key="reg_images",
+                                height=68,
+                                placeholder="预约页/无渲染图机型可人工补充官方概念图链接，外观分析将优先使用")
         if st.button("📥 录入注册表"):
             if m_model.strip() and m_url.strip():
                 aliases = [a.strip() for a in m_alias.split(",") if a.strip()]
+                raw_imgs = m_images.replace(",", "\n").split("\n")
+                images = [u.strip() for u in raw_imgs if u.strip().startswith("http")]
                 registry_upsert(m_model.strip(), m_url.strip(), brand=m_brand,
-                                aliases=aliases or None, source="manual")
-                st.success(f"已录入「{m_model.strip()}」✅ 该型号此后查找将直接命中注册表")
+                                aliases=aliases or None, images=images or None, source="manual")
+                st.success(f"已录入「{m_model.strip()}」✅ 该型号此后查找将直接命中注册表" +
+                           ("（含人工补充外观图）" if images else ""))
             else:
                 st.error("型号和 URL 都不能为空")
