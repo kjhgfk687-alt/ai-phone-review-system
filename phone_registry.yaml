@@ -125,7 +125,7 @@ phones:
   aliases:
   - 小米 Xiaomi 17
   brand: 小米
-  spec_url: https://www.mi.com/prod/xiaomi-17/specs
+  spec_url: https://www.mi.com/tw/product/xiaomi-17/specs/
   landing_url: https://www.mi.com/prod/xiaomi-17/
   keywords: []
   sources: []
@@ -145,13 +145,13 @@ phones:
   aliases:
   - 小米 Xiaomi 15
   brand: 小米
-  spec_url: https://www.mi.com/prod/xiaomi-15/specs
+  spec_url: https://www.mi.com/hk/product/xiaomi-15/specs/
   landing_url: https://www.mi.com/prod/xiaomi-15/
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -330,7 +330,7 @@ phones:
 - model: iQOO Neo10
   aliases: []
   brand: iQOO
-  spec_url: https://www.iqoo.com/iqoo/neo10/
+  spec_url: https://www.vivo.com.cn/vivo/iqooneo10/
   landing_url: ''
   keywords: []
   sources: []
@@ -368,7 +368,7 @@ phones:
   aliases:
   - 荣耀 Magic8
   brand: 荣耀
-  spec_url: https://www.honor.cn/magic8/specs/
+  spec_url: https://www.honor.com/cn/phones/honor-magic8/
   landing_url: https://www.honor.cn/magic8/
   keywords: []
   sources: []
@@ -422,7 +422,7 @@ phones:
   aliases:
   - 华为 Pura 80
   brand: 华为
-  spec_url: https://consumer.huawei.com/cn/phones/pura-80/specs/
+  spec_url: https://consumer.huawei.com/cn/phones/pura80/specs/
   landing_url: https://consumer.huawei.com/cn/phones/pura-80/
   keywords: []
   sources: []
@@ -649,3 +649,507 @@ phones:
   images:
   - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952873128/71087008a75d630fb68baf379286c58d.png
   - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952867569/8db534fe34139d685e8b3491a246.png
+- model: 荣耀Magic V Flip2
+  aliases: []
+  brand: ''
+  spec_url: https://www.honor.com/cn/shop/product/10086776050858.html
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: HONOR Magic8 Pro
+  aliases: []
+  brand: ''
+  spec_url: https://www.honor.com/tw/phones/honor-magic8-pro/spec/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 荣耀X20
+  aliases: []
+  brand: ''
+  spec_url: https://www.honor.com/cn/shop/product/10086109808394.html
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 三星 Galaxy Z Fold8
+  aliases: []
+  brand: ''
+  spec_url: https://www.samsung.com.cn/smartphones/galaxy-z-fold8/specs/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 三星 Galaxy S25 Edge
+  aliases: []
+  brand: ''
+  spec_url: https://www.samsung.com.cn/smartphones/galaxy-s25-edge/specs/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 三星 Galaxy S25
+  aliases: []
+  brand: ''
+  spec_url: https://www.samsung.com.cn/smartphones/galaxy-s25/specs/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 三星 Galaxy S25 Ultra
+  aliases: []
+  brand: ''
+  spec_url: https://www.samsung.com.cn/smartphones/galaxy-s25-ultra/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 三星 W26
+  aliases: []
+  brand: ''
+  spec_url: https://www.samsung.com.cn/smartphones/samsung-w26/specs/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 三星 W25 Flip
+  aliases: []
+  brand: ''
+  spec_url: https://www.samsung.com.cn/smartphones/samsung-w25-flip/specs/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 三星 Galaxy A56 5G
+  aliases: []
+  brand: ''
+  spec_url: https://www.samsung.com.cn/smartphones/galaxy-a/galaxy-a56-5g-awesome-lightgray-256gb-sm-a5660zacchc/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: 一加 13T
+  aliases: []
+  brand: ''
+  spec_url: https://www.oneplus.com/cn/13t/specs
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: OnePlus 11 5G
+  aliases: []
+  brand: ''
+  spec_url: https://www.oneplus.com/global/11/specs
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: iQOO Z10 Turbo+
+  aliases: []
+  brand: ''
+  spec_url: https://m.vivo.com.cn/vivo/iqooz10turboplus
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: iQOO Z9x 5G
+  aliases: []
+  brand: ''
+  spec_url: https://www.iqoo.com/en/products/param/z9x-5g
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: iQOO Z9
+  aliases: []
+  brand: ''
+  spec_url: https://www.vivo.com.cn/vivo/iqooz9
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: iQOO Z9 Turbo+
+  aliases: []
+  brand: ''
+  spec_url: https://www.vivo.com.cn/vivo/param/iqooz9turbocxh
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: iQOO Z11S
+  aliases: []
+  brand: ''
+  spec_url: https://m.vivo.com.cn/vivo/iqooz11s
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: OPPO A7 Pro Max
+  aliases: []
+  brand: ''
+  spec_url: https://www.oppo.com/cn/smartphones/series-a/a7-pro-max/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: OPPO 超 A6x
+  aliases: []
+  brand: ''
+  spec_url: https://www.oppo.com/cn/smartphones/series-a/a6x/specs/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: OPPO A56
+  aliases: []
+  brand: ''
+  spec_url: https://www.oppo.com/cn/smartphones/series-a/a56/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: OPPO Find X5 Pro 天玑版
+  aliases: []
+  brand: ''
+  spec_url: https://www.oppo.com/cn/smartphones/series-find-x/find-x5-pro-dimensity/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: vivo X300 Pro
+  aliases: []
+  brand: ''
+  spec_url: https://www.vivo.com.cn/vivo/param/x300pro/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: vivo S60
+  aliases: []
+  brand: ''
+  spec_url: https://www.vivo.com.cn/vivo/param/s60
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: iQOO Z8
+  aliases: []
+  brand: ''
+  spec_url: https://m.vivo.com.cn/vivo/iqooz8/14
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: vivo Y500
+  aliases: []
+  brand: ''
+  spec_url: https://m.vivo.com.cn/vivo/y500
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: vivo Y200i
+  aliases: []
+  brand: ''
+  spec_url: https://m.vivo.com.cn/vivo/y200i/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: REDMI K90 Pro Max
+  aliases: []
+  brand: ''
+  spec_url: https://www.mi.com/prod/redmi-k90-pro-max
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: Xiaomi 17 Ultra
+  aliases: []
+  brand: ''
+  spec_url: https://www.mi.com/tw/product/xiaomi-17-ultra/specs/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: HUAWEI nova 15
+  aliases: []
+  brand: ''
+  spec_url: https://consumer.huawei.com/cn/phones/nova15/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: HUAWEI Mate 80
+  aliases: []
+  brand: ''
+  spec_url: https://consumer.huawei.com/cn/phones/mate80/specs/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: HUAWEI Mate 80 RS 非凡大师
+  aliases: []
+  brand: ''
+  spec_url: https://consumer.huawei.com/cn/phones/mate80-rs-ultimate-design/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: HUAWEI Pura 90s Pro Max
+  aliases: []
+  brand: ''
+  spec_url: https://consumer.huawei.com/hk/phones/pura90s-pro-max/specs/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: HUAWEI Pura 90
+  aliases: []
+  brand: ''
+  spec_url: https://consumer.huawei.com/cn/phones/pura90/specs/
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: Apple iPhone 18 Pro
+  aliases: []
+  brand: ''
+  spec_url: https://support.apple.com/zh-cn/148590
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: Apple iPhone 18 Pro Max
+  aliases: []
+  brand: ''
+  spec_url: https://support.apple.com/zh-tw/148591
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
+- model: Apple iPhone Air
+  aliases: []
+  brand: ''
+  spec_url: https://support.apple.com/zh-cn/125092
+  landing_url: ''
+  keywords: []
+  images: []
+  sources: []
+  added_at: '2026-09-18'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
+  rag:
+    corpus_status: pending
+  source: confirmed
