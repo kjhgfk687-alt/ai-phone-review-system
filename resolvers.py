@@ -58,7 +58,7 @@ BRAND_ADAPTERS: Dict[str, dict] = {
             "https://www.vivo.com.cn/vivo/{slug}/",
             "https://www.vivo.com.cn/vivo/param/{slug}",
         ],
-        "landing_from_spec": None,   # vivo 参数页即产品页
+        "landing_from_spec": "param_to_product",   # /vivo/param/x300 → /vivo/x300/（产品页图更全）
         "image_exclude": ["kv", "banner", "logo", "icon", ".svg"],
         "spec_markers": ["param", "spec"],
     },
@@ -73,7 +73,7 @@ BRAND_ADAPTERS: Dict[str, dict] = {
             "https://www.vivo.com.cn/vivo/param/{slug}",
             "https://www.vivo.com.cn/vivo/{slug}/",
         ],
-        "landing_from_spec": None,
+        "landing_from_spec": "param_to_product",
         "image_exclude": ["kv", "banner", "logo", "icon", ".svg"],
         "spec_markers": ["param", "spec"],
     },
@@ -259,8 +259,12 @@ def landing_from_spec(url: str, brand: Optional[str]) -> str:
     """参数页 URL → 产品主图页 URL（按适配器规则，未收录品牌走通用规则）"""
     u = str(url).strip()
     ad = get_adapter(brand)
-    if ad.get("landing_from_spec") == "strip_specs":
+    rule = ad.get("landing_from_spec")
+    if rule == "strip_specs":
         return re.sub(r'/specs?/?$', '/', u)
+    if rule == "param_to_product":
+        # vivo/iQOO：/vivo/param/{slug} → /vivo/{slug}/（产品页图片资源更全）
+        return re.sub(r'/param/([^/]+)$', r'/\1/', u)
     return re.sub(r'/(specs|spec|param)[^/]*/?$', '/', u)
 
 def image_exclude_words(brand: Optional[str]) -> List[str]:

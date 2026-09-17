@@ -30,9 +30,15 @@ st.set_page_config(
 st.title("📱 AI手机参数提取与评测系统")
 st.markdown("---")
 
-# 紧凑键值对样式（参数双栏区使用）
+# 紧凑排版样式（参数双栏/知识解读/生成正文统一小字号）
 st.markdown("""<style>
 .compact-kv p { margin: 0 0 5px 0; font-size: 0.88em; line-height: 1.5; }
+.compact-doc h4 { margin: 8px 0 4px 0; font-size: 0.95em; }
+.compact-doc ul { margin: 2px 0 10px 0; padding-left: 18px; }
+.compact-doc li { font-size: 0.88em; margin: 2px 0; line-height: 1.55; }
+.compact-doc p { margin: 4px 0; font-size: 0.88em; }
+[data-testid="stMarkdownContainer"] h3 { font-size: 1.1em; margin-top: 0.9em; }
+[data-testid="stMarkdownContainer"] h4 { font-size: 0.95em; margin: 0.6em 0 0.3em 0; }
 </style>""", unsafe_allow_html=True)
 
 # 初始化会话状态
@@ -198,102 +204,58 @@ def render_conflicts_table(container, conflicts):
         st.dataframe(rows, use_container_width=True, hide_index=True)
 
 def display_knowledge_summary(summary, container):
-    """展示知识总结（中文键名）"""
+    """知识解读：紧凑 HTML 排版（小标题+小字号列表），替代大标题渲染"""
     if not summary:
         return
 
-    container.subheader("📚 专业知识解读")
-
     display_key_map = {
-        "resolution_desc": "分辨率",
-        "refresh_desc": "刷新率",
-        "screen_type_desc": "屏幕类型",
-        "brightness_desc": "亮度",
-        "capacity_desc": "电池容量",
-        "charging_desc": "有线充电",
-        "wireless_charging_desc": "无线充电",
-        "sensor_desc": "传感器",
-        "aperture_desc": "光圈",
-        "pixel_desc": "像素",
-        "zoom_desc": "变焦",
+        "resolution_desc": "分辨率", "refresh_desc": "刷新率",
+        "screen_type_desc": "屏幕类型", "brightness_desc": "亮度",
+        "capacity_desc": "电池容量", "charging_desc": "有线充电",
+        "wireless_charging_desc": "无线充电", "sensor_desc": "传感器",
+        "aperture_desc": "光圈", "pixel_desc": "像素", "zoom_desc": "变焦",
     }
 
-    if "chipset" in summary:
-        chipset = summary["chipset"]
-        name = chipset.get("name", "")
-        info = chipset.get("info", {})
-        container.markdown("### 🔥 芯片性能")
-        container.markdown(f"**{name}**")
-        if info.get("description"):
-            container.markdown(f"📝 {info['description']}")
-        if info.get("performance_score"):
-            container.markdown(f"⭐ 性能评分：{info['performance_score']}/100")
-        if info.get("tier"):
-            container.markdown(f"🏷️ 定位：{info['tier']}")
-        if info.get("strengths"):
-            container.markdown("**优势**：")
-            for s in info["strengths"]:
-                container.markdown(f"- {s}")
-        if info.get("weaknesses"):
-            container.markdown("**注意**：")
-            for w in info["weaknesses"]:
-                container.markdown(f"- {w}")
-        if info.get("typical_price_range"):
-            container.markdown(f"💰 常见价格区间：{info['typical_price_range']}")
-        if info.get("note"):
-            container.markdown(f"📌 {info['note']}")
-        container.markdown("---")
+    import html as _html
+    def _h4(t): return f"<h4>{_html.escape(str(t))}</h4>"
+    def _li(t): return f"<li>{_html.escape(str(t))}</li>"
+    def _ul(items): return "<ul>" + "".join(_li(i) for i in items) + "</ul>"
 
-    for section_key, title in [("display", "🖥️ 屏幕表现"), ("battery", "🔋 电池与充电"),
-                               ("camera", "📷 相机能力")]:
-        if section_key in summary:
-            container.markdown(f"### {title}")
-            for key, desc in summary[section_key].items():
-                label = display_key_map.get(key, key.replace('_desc', ''))
-                container.markdown(f"- **{label}**：{desc}")
-            container.markdown("---")
+    parts = ['<div class="compact-doc">']
+
+    if "chipset" in summary:
+        info = (summary["chipset"].get("info") or {})
+        chipset = summary["chipset"]
+        parts.append(_h4(f"🔥 芯片 · {chipset.get('name','')}（{info.get('tier','')} · 评分 {info.get('performance_score','?')}/100）"))
+        if info.get("description"):
+            parts.append(f"<p>📝 {_html.escape(info['description'])}</p>")
+        rows = []
+        if info.get("strengths"): rows.append("优势：" + "；".join(info["strengths"]))
+        if info.get("weaknesses"): rows.append("注意：" + "；".join(info["weaknesses"]))
+        if info.get("typical_price_range"): rows.append(f"常见价格区间：{info['typical_price_range']}")
+        if info.get("note"): rows.append(f"备注：{info['note']}")
+        parts.append(_ul(rows))
+
+    for sec_key, title in [("display", "🖥️ 屏幕"), ("battery", "🔋 电池与充电"), ("camera", "📷 相机")]:
+        if sec_key in summary:
+            parts.append(_h4(title))
+            parts.append(_ul([f"{display_key_map.get(k, k.replace('_desc',''))}：{v}"
+                              for k, v in summary[sec_key].items()]))
 
     if "brand" in summary:
         brand = summary["brand"]
-        container.markdown("### 🏢 品牌特色")
-        if brand.get("brand_positioning"):
-            container.markdown(f"**定位**：{brand['brand_positioning']}")
-        if brand.get("target_users"):
-            container.markdown(f"**目标用户**：{brand['target_users']}")
-        if brand.get("key_technologies"):
-            container.markdown("**核心技术**：")
-            for tech in brand["key_technologies"]:
-                container.markdown(f"- {tech}")
-        if brand.get("new_technologies_2025_2026"):
-            container.markdown("**最新技术（2025-2026）**：")
-            for tech in brand["new_technologies_2025_2026"]:
-                container.markdown(f"- {tech}")
-        container.markdown("---")
+        parts.append(_h4("🏢 品牌"))
+        rows = []
+        if brand.get("brand_positioning"): rows.append(f"定位：{brand['brand_positioning']}")
+        if brand.get("target_users"): rows.append(f"目标用户：{brand['target_users']}")
+        if brand.get("key_technologies"): rows.append("核心技术：" + "、".join(brand["key_technologies"]))
+        for t in brand.get("new_technologies_2025_2026") or []:
+            rows.append(f"新技术：{t}")
+        parts.append(_ul(rows))
 
-# ---- 后台生成任务的轮询渲染（fragment 自动刷新） ----
-@st.fragment(run_every="2s")
-def task_fragment(task_id: str, header: str, download_name: str = None):
-    """轮询渲染后台生成任务：运行中显示耗时与流式正文，完成显示结果与下载"""
-    t = get_generation_task(task_id)
-    if not t:
-        return
-    if t["status"] == "running":
-        elapsed = time.time() - t["started"]
-        extra = f"，正文已到 {len(t['text'])} 字" if t["text"] else ""
-        st.info(f"⏳ {t['title']} 生成中… 已用 {elapsed:.0f} 秒{extra}")
-        if t["text"]:
-            st.markdown(t["text"])
-    elif t["status"] == "done":
-        st.markdown(f"**{header}**")
-        st.markdown(t["text"])
-        if download_name:
-            st.download_button(
-                "⬇️ 下载（Markdown）", data=t["text"],
-                file_name=download_name, mime="text/markdown",
-                key=f"dl_{task_id}"
-            )
-    else:
-        st.error(f"{t['title']} 生成失败：{t['error']}（可重试）")
+    parts.append("</div>")
+    container.subheader("📚 专业知识解读")
+    container.markdown("".join(parts), unsafe_allow_html=True)
 
 # ================= 输入与提取 =================
 # ---- 按型号自动查找（V1.4 功能①） ----

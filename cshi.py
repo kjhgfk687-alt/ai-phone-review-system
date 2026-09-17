@@ -1198,27 +1198,48 @@ def extract_product_images(spec_url: str, max_images: int = 4) -> List[dict]:
     else:
         md_text = md["text"]
 
-    # 机型 slug = 主图页 URL 最后一个路径段（如 find-x9s-pro）
+    # 机型 slug（加分项，不再是必要条件——vivo/iQOO 等站的真图是 CDN 哈希路径，
+    # 反而页面自链接才含 slug。V2.0a 改为资产特征正向打分，见下）
     segments = [s for s in landing.split('/') if s]
     slug = segments[-1].lower() if segments else ""
-    if not slug:
-        return []
 
     exclude = image_exclude_words(brand)
     pairs = re.findall(r'!\[([^\]]*)\]\((https?://[^)\s]+?)\)', md_text)
-    seen, picked = set(), []
-    for alt, u in pairs:
+
+    def _asset_score(u: str) -> Optional[int]:
+        """图片资产正向打分：越像真图分越高；非资产/自链接/排除词返回 None。
+        实测教训：vivo 页 137 个含 slug 的"图"全是页面自链接，真图是
+        静态 CDN 哈希路径（不含 slug）——slug 必须降级为加分项。"""
         ul = u.lower()
-        if slug not in ul:
-            continue
+        if ul.rstrip('/?') == landing.rstrip('/?') or (landing and ul.startswith(landing.lower().rstrip('/'))):
+            return None                                    # 页面自链接
         if any(x in ul for x in exclude):
-            continue
+            return None
+        score = 0
+        if re.search(r'\.(png|jpe?g|webp)(\?|$)', ul):
+            score += 2
+        elif not re.search(r'\.(png|jpe?g|webp|avif|gif)(\?|$)', ul):
+            # 无图片扩展名：需有资产路径/域名特征才考虑
+            if not any(k in ul for k in ("image", "asset", "static", "img", "fs.", "cdn", "dam")):
+                return None
+            score += 1
+        if any(k in ul for k in ("static", "asset", "fs.", "cdn", "dam", "img")):
+            score += 1
+        if slug and slug in ul:
+            score += 1                                     # 含机型 slug 加分
+        return score
+
+    scored = []
+    seen = set()
+    for alt, u in pairs:
         if u in seen:
             continue
         seen.add(u)
-        picked.append((alt.strip(), u))
-        if len(picked) >= max_images:
-            break
+        s = _asset_score(u)
+        if s is not None and s > 0:
+            scored.append((s, alt.strip(), u))
+    scored.sort(key=lambda x: -x[0])
+    picked = [(alt, u) for s, alt, u in scored[:max_images]]
 
     origin = '/'.join(landing.split('/')[:3])
     os.makedirs(IMAGE_CACHE_DIR, exist_ok=True)

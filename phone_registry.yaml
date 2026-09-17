@@ -487,3 +487,17 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+- model: iqoo15ultra
+  aliases:
+  - iqoo15ultra
+  brand: vivo
+  spec_url: https://www.vivo.com.cn/vivo/param/iqoo15ultra
+  landing_url: ''
+  keywords: []
+  sources: []
+  added_at: '2026-09-17'
+  updated_at: '2026-09-17'
+  verified_at: '2026-09-17'
+  rag:
+    corpus_status: pending
+  source: confirmed
