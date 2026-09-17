@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Any, List, Optional, Callable, Tuple
 
 from knowledge_base import PhoneKnowledgeBase
+import knowledge_store
 from resolvers import normalize_model
 
 # ================= 1. 配置（支持 .env / 环境变量） =================
@@ -908,6 +909,22 @@ def extract_single_phone(url: str, phone_name: str = None,
         print(f"🏷️ 生成 {len(tags)} 个标签")
 
     save_result(phone_name, final_result)
+    # 规范名解析：优先用注册表登记名作为知识库主键（别名查询经注册表桥接）
+    _kb_entry = None
+    try:
+        import registry as _reg
+        _kb_entry = _reg.find_by_spec_url(url) or _reg.lookup(phone_name)
+    except Exception:
+        pass
+    _kb_model = (_kb_entry or {}).get("model") or phone_name
+    # 提取名登记为规范名别名：保证任何叫法经注册表都能桥接到知识库文件
+    try:
+        import registry as _reg2
+        if _kb_entry is not None:
+            _reg2.upsert(_kb_model, url, aliases=[phone_name])
+    except Exception:
+        pass
+    knowledge_store.save_params(_kb_model, final_result, spec_url=url)
     if use_cache:
         save_cache(url, "phone", {"phone_name": phone_name, "result": final_result})
 

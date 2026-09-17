@@ -141,7 +141,8 @@ phones:
   - https://cdn.cnbj1.fds.api.mi-img.com/product-images/new-product-images/xiaomi-17_55032/images/11309.png
   - https://cdn.cnbj1.fds.api.mi-img.com/product-images/new-product-images/xiaomi-17_55032/images/11349.png
 - model: 小米15
-  aliases: []
+  aliases:
+  - 小米 Xiaomi 15
   brand: 小米
   spec_url: https://www.mi.com/prod/xiaomi-15/specs
   landing_url: https://www.mi.com/prod/xiaomi-15/
