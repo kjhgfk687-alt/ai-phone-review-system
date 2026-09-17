@@ -1,5 +1,5 @@
 version: 2
-updated_at: '2026-09-17'
+updated_at: '2026-09-18'
 phones:
 - model: vivox100
   aliases: []
@@ -71,8 +71,8 @@ phones:
   - 天玑9400
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -91,8 +91,8 @@ phones:
   - 骁龙8 Gen3
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -111,8 +111,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -122,15 +122,16 @@ phones:
   - https://i02.appmifile.com/mi-com-product/fly-birds/xiaomi-17t/pc/1a3744e7b8a35761e91b25b02a223231.jpg
   - https://i02.appmifile.com/mi-com-product/fly-birds/xiaomi-17t/pc/e82b569b0b0153fcefbc4a7ce84209cb.png
 - model: 小米17
-  aliases: []
+  aliases:
+  - 小米 Xiaomi 17
   brand: 小米
   spec_url: https://www.mi.com/prod/xiaomi-17/specs
   landing_url: https://www.mi.com/prod/xiaomi-17/
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -168,8 +169,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -188,8 +189,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -207,8 +208,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -226,8 +227,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -245,8 +246,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -264,8 +265,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -282,8 +283,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -300,8 +301,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -315,8 +316,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -334,8 +335,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -354,8 +355,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -372,8 +373,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -390,8 +391,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -408,8 +409,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -426,8 +427,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -442,8 +443,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -457,17 +458,18 @@ phones:
   aliases:
   - Galaxy S26
   - S26
+  - Samsung Galaxy S26 & S26+
   brand: 三星
   spec_url: https://www.samsung.com/hk/smartphones/galaxy-s26/specs/
   landing_url: ''
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
-  source: manual
+  source: confirmed
   note: 自动采集未达置信度（50%）
 - model: OPPO Reno15
   aliases:
@@ -478,8 +480,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -516,8 +518,8 @@ phones:
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -543,14 +545,15 @@ phones:
 - model: iPhone 17
   aliases:
   - iPhone 17
+  - Apple iPhone 17
   brand: 苹果
   spec_url: https://www.apple.com.cn/iphone-17/specs/
   landing_url: https://www.apple.com.cn/iphone-17/
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -562,42 +565,45 @@ phones:
 - model: iPhone 17 Air
   aliases:
   - iPhone 17 Air
+  - Apple iPhone 17 Air
   brand: 苹果
   spec_url: https://www.apple.com.cn/iphone-17-air/specs/
   landing_url: https://www.apple.com.cn/iphone-17-air/
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
 - model: iPhone 16 Pro Max
   aliases:
   - iPhone 16 Pro Max
+  - Apple iPhone 16 Pro Max
   brand: 苹果
   spec_url: https://www.apple.com.cn/iphone-16-pro-max/specs/
   landing_url: https://www.apple.com.cn/iphone-16-pro-max/
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
 - model: iPhone 16
   aliases:
   - iPhone 16
+  - Apple iPhone 16
   brand: 苹果
   spec_url: https://www.apple.com.cn/iphone-16/specs/
   landing_url: https://www.apple.com.cn/iphone-16/
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
@@ -609,14 +615,15 @@ phones:
 - model: iPhone 16e
   aliases:
   - iPhone 16e
+  - Apple iPhone 16e
   brand: 苹果
   spec_url: https://www.apple.com.cn/iphone-16-e/specs/
   landing_url: https://www.apple.com.cn/iphone-16-e/
   keywords: []
   sources: []
   added_at: '2026-09-17'
-  updated_at: '2026-09-17'
-  verified_at: '2026-09-17'
+  updated_at: '2026-09-18'
+  verified_at: '2026-09-18'
   rag:
     corpus_status: pending
   source: confirmed
