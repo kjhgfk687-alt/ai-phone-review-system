@@ -778,16 +778,25 @@ if st.session_state.get("dev_unlocked"):
     _r2.metric("语料块", _rs["chunks"])
     _r3.metric("索引日期", _rs["built_at"])
     st.caption("来源分布：" + "，".join(f"{k} {v} 篇" for k, v in _rs["by_source"].items()))
-    _rb1, _rb2 = st.columns(2)
+    _rb1, _rb2, _rb3 = st.columns(3)
     if _rb1.button("🔄 重建索引", use_container_width=True):
         rag.rebuild_index()
         st.toast("RAG 索引已重建 ✅", icon="🧠")
     _rag_q = _rb2.text_input("检索测试", key="rag_test_q",
                              placeholder="输入问题，查看会命中哪些语料块", label_visibility="collapsed")
-    if _rag_q.strip() and st.button("▶️ 测试检索", key="rag_test_btn"):
+    if _rag_q.strip() and _rb2.button("▶️ 测试检索", key="rag_test_btn", use_container_width=True):
         for _h in rag.search(_rag_q.strip(), top_k=4):
             st.markdown(f"**[{_h['score']:.1f}] {_h['title']}**（{_h['source']}）")
             st.caption(_h["text"][:150])
+    if _rb3.button("🎯 命中率评测", use_container_width=True):
+        with st.status("正在运行检索评测集...", expanded=True) as _ev_status:
+            _ev = rag.evaluate(top_k=3)
+            _ev_status.update(label=f"评测完成：命中率 {_ev['rate']:.0%}（{_ev['hits']}/{_ev['total']}）",
+                              state="complete", expanded=True)
+        for d in _ev["details"]:
+            mark = "✅" if d["hit"] else "❌"
+            st.markdown(f"{mark} {d['q']} → {d.get('title', '')[:44]}")
+    st.caption("评测集：rag_eval.yaml（q + expect 关键词），新增语料后可随时回归。")
 
 # ================= 页脚 =================
 st.markdown("---")

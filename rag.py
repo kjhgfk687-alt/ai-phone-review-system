@@ -35,11 +35,39 @@ _load_env()
 EMBEDDING_API_KEY = os.environ.get("EMBEDDING_API_KEY", "")
 EMBEDDING_BASE_URL = os.environ.get("EMBEDDING_BASE_URL", "https://api.siliconflow.cn/v1")
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "BAAI/bge-m3")
+RAG_RERANK = os.environ.get("RAG_RERANK", "1") != "0"
+RERANK_MODEL = os.environ.get("RERANK_MODEL", "BAAI/bge-reranker-v2-m3")
+EVAL_PATH = os.path.join(BASE_DIR, "rag_eval.yaml")
 
 K1, B = 1.5, 0.75          # BM25 参数
 CHUNK_MAX = 420             # 语料块目标长度（字符）
 
 # ==================== 分词：拉丁词 + 中文字符二元组/一元 ====================
+# 查询同义词扩展：维护此处即可引导检索（面向"我维护知识库"的工作流）
+QUERY_SYNONYMS = {
+    "续航": ["电池容量", "电池"],
+    "快充": ["充电功率", "有线充电"],
+    "充电": ["充电功率", "快充"],
+    "拍照": ["相机", "影像", "摄像头"],
+    "影像": ["相机", "拍照", "摄像头"],
+    "相机": ["影像", "拍照"],
+    "性能": ["处理器", "芯片", "性能评分"],
+    "屏幕": ["显示屏", "分辨率", "刷新率"],
+    "性价比": ["价格", "发售价"],
+    "防水": ["防尘防水", "IP68"],
+    "手感": ["重量", "厚度", "机身尺寸"],
+    "外观": ["机身尺寸", "重量", "颜色", "材质"],
+}
+
+def expand_query_tokens(tokens: List[str]) -> List[str]:
+    """同义词扩展：命中词表的查询词追加其关联词（BM25 召回增益）"""
+    expanded = list(tokens)
+    joined = " ".join(tokens)
+    for root, syns in QUERY_SYNONYMS.items():
+        if root in joined:
+            expanded += tokenize(" ".join(syns))
+    return expanded
+
 def tokenize(text: str) -> List[str]:
     text = (text or "").lower()
     tokens = re.findall(r'[a-z0-9]+', text)               # 英文/数字词
@@ -346,7 +374,7 @@ def search(query: str, top_k: int = 4, boost_model: str = None) -> List[Dict]:
     idx = get_index()
     if not idx.get("n"):
         return []
-    q_tokens = tokenize(query)
+    q_tokens = expand_query_tokens(tokenize(query))
     boost_tokens = set(tokenize(boost_model)) if boost_model else set()
     k1, b, avg, n = K1, B, idx["avg_len"] or 1.0, idx["n"]
     df = idx["df"]
@@ -418,6 +446,27 @@ def search(query: str, top_k: int = 4, boost_model: str = None) -> List[Dict]:
         results.append({**chunk, "score": round(f["s"] + bonus, 3)})
 
     results.sort(key=lambda x: (-x["score"], -x.get("cos", 0.0)))
+
+    # ---- cross-encoder 重排：取融合前 12，用 bge-reranker 精排出 top_k ----
+    if RAG_RERANK and EMBEDDING_API_KEY and results:
+        try:
+            import requests as _rq
+            cand = results[:12]
+            r = _rq.post(EMBEDDING_BASE_URL + "/rerank",
+                         headers={"Authorization": "Bearer " + EMBEDDING_API_KEY,
+                                  "Content-Type": "application/json"},
+                         json={"model": RERANK_MODEL, "query": query,
+                               "documents": [c["text"] for c in cand],
+                               "top_docs": len(cand)}, timeout=30)
+            if r.status_code == 200:
+                reranked = []
+                for item in sorted(r.json()["results"], key=lambda x: -x["relevance_score"]):
+                    c = cand[item["index"]]
+                    c = {**c, "score": round(item["relevance_score"], 3)}
+                    reranked.append(c)
+                results = reranked
+        except Exception as e:
+            print("⚠️ 重排失败（保留融合排序）：" + str(e)[:60])
     seen_titles = set()
     out = []
     for c in results:
@@ -446,6 +495,42 @@ def build_context(query: str, model: str = None, top_k: int = 4) -> str:
         dt = f"，{h['date']}" if h.get("date") else ""
         blocks.append(f"[资料{i}｜来源：{src}{dt}｜主题：{h['title']}]\n{h['text']}")
     return "\n\n".join(blocks)
+
+# ==================== 检索评测（命中率量化） ====================
+def evaluate(top_k: int = 3) -> Dict:
+    """跑评测集：每个 case 检索 top_k，判定 expect 关键词是否命中标题或正文。
+    返回 {total, hits, rate, details:[{q, hit, matched}]}——开发者面板与 RAG 调优用。"""
+    import yaml
+    cases = []
+    try:
+        with open(EVAL_PATH, encoding="utf-8") as f:
+            cases = (yaml.safe_load(f) or {}).get("cases") or []
+    except Exception as e:
+        print(f"⚠️ 评测集读取失败：{e}")
+        return {"total": 0, "hits": 0, "rate": 0.0, "details": []}
+    details, hits = [], 0
+    for case in cases:
+        q = case.get("q", "")
+        expects = [str(e).lower() for e in (case.get("expect") or [])]
+        found = None
+        try:
+            for h in search(q, top_k=top_k, boost_model=None):
+                blob = (h["title"] + " " + h["text"]).lower()
+                matched = [e for e in expects if e in blob]
+                if matched:
+                    found = {"q": q, "hit": True, "matched": matched,
+                             "title": h["title"]}
+                    break
+        except Exception as e:
+            found = {"q": q, "hit": False, "matched": [], "title": f"检索异常: {str(e)[:40]}"}
+        if found is None:
+            found = {"q": q, "hit": False, "matched": [], "title": ""}
+        details.append(found)
+        if found["hit"]:
+            hits += 1
+    total = len(cases)
+    return {"total": total, "hits": hits, "rate": round(hits / total, 3) if total else 0.0,
+            "details": details}
 
 # ==================== 统计（开发者面板用） ====================
 def rag_stats() -> Dict:

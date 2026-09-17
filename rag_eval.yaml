@@ -1,0 +1,32 @@
+# RAG 检索评测集——开发者维护
+# 规则：query 为用户可能输入的问题；expect 为理想命中语料应包含的关键词（命中任一即算通过）。
+# 运行方式：开发者模式 → RAG 知识库 → 「🎯 命中率评测」
+cases:
+  - q: "小米15 续航怎么样"
+    expect: ["小米15"]
+  - q: "小米15 充电功率"
+    expect: ["小米15"]
+  - q: "天玑9500 性能评分"
+    expect: ["天玑9500"]
+  - q: "iPhone 17 Pro Max 相机"
+    expect: ["iPhone 17 Pro Max"]
+  - q: "Redmi K80 参数"
+    expect: ["K80"]
+  - q: "vivo X300 Ultra 影像"
+    expect: ["X300 Ultra"]
+  - q: "一加 15 屏幕"
+    expect: ["一加15"]
+  - q: "真我 GT8 Pro 规格"
+    expect: ["GT8 Pro"]
+  - q: "三星 Galaxy S26 规格"
+    expect: ["Galaxy S26"]
+  - q: "荣耀 Magic8 发布"
+    expect: ["Magic8"]
+  - q: "华为 Pura 80 影像"
+    expect: ["Pura 80"]
+  - q: "2026 旗舰机续航趋势"
+    expect: ["续航"]
+  - q: "OPPO Find X9s Pro 快充"
+    expect: ["X9s Pro"]
+  - q: "iQOO Neo10 性能"
+    expect: ["Neo10"]
