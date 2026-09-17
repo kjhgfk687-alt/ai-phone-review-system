@@ -88,11 +88,13 @@ def _count(phones: List[dict], field: str) -> Dict[str, int]:
 def upsert(model: str, spec_url: str, brand: Optional[str] = None,
            landing_url: Optional[str] = None, aliases: Optional[List[str]] = None,
            keywords: Optional[List[str]] = None, images: Optional[List[str]] = None,
+           appearance: Optional[dict] = None,
            source: str = "confirmed", note: str = None) -> dict:
     """
     新增或更新一条机型记录（按归一化 model 判重）。
     source: manual=手动补录 | confirmed=搜索确认 | template=模板直配 | pending=待补录
-    images: 人工补充的外观图 URL（预约页/无渲染图机型的外观分析数据源）
+    images: 策展外观图（远程 URL 或 assets 相对路径）
+    appearance: {analysis, model} 外观分析结果缓存（访客直读，零 API 消耗）
     """
     data = load()
     key = normalize_model(model)
@@ -139,6 +141,11 @@ def upsert(model: str, spec_url: str, brand: Optional[str] = None,
             if im not in merged:
                 merged.append(im)
         entry["images"] = merged
+    if appearance and appearance.get("analysis"):
+        entry["appearance"] = {
+            "analysis": appearance["analysis"],
+            "generated_at": now,
+        }
     if note:
         entry["note"] = note
     entry["source"] = source if spec_url else entry.get("source", source)
