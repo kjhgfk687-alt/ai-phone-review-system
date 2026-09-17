@@ -12,7 +12,8 @@ sys.path.append(os.path.dirname(__file__))
 from cshi import (
     extract_single_phone, generate_review, generate_comparison,
     generate_personalized_advice, generate_appearance_analysis,
-    extract_product_images, download_manual_images, KEY_TRANSLATION, clear_cache,
+    download_manual_images, resolve_image, save_uploaded_images,
+    generation_task_stats, KEY_TRANSLATION, clear_cache,
     MAX_PARALLEL_URLS, EXTRACT_API_KEY,
     submit_generation_task, get_generation_task
 )
@@ -22,6 +23,7 @@ from registry import (
     find_by_spec_url, lookup as registry_lookup
 )
 from resolvers import BRAND_ADAPTERS
+from scoring import score_phone
 
 # 页面配置
 st.set_page_config(
@@ -42,6 +44,10 @@ st.markdown("""<style>
 .compact-doc p { margin: 4px 0; font-size: 0.88em; }
 [data-testid="stMarkdownContainer"] h3 { font-size: 1.1em; margin-top: 0.9em; }
 [data-testid="stMarkdownContainer"] h4 { font-size: 0.95em; margin: 0.6em 0 0.3em 0; }
+[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.tag-neg { background-color:#FDE8E8; color:#B3261E; }
+.tag-pos { background-color:#E6F4EA; color:#1E7B34; }
+span[class^="tag-"] { padding:4px 8px; margin-right:6px; border-radius:4px; font-size:0.88em; display:inline-block; }
 </style>""", unsafe_allow_html=True)
 
 # 初始化会话状态
@@ -51,6 +57,15 @@ if "user_profile" not in st.session_state:
     st.session_state.user_profile = None  # 侧边栏用户画像
 # 评测/建议/对比结果改由 cshi 后台任务存储管理（get_generation_task），
 # 界面轮询渲染，因此不再需要 review_results/advice_results/comparison_result
+
+# ================= 顶部指标行 =================
+_reg_stats = registry_stats()
+_task_stats = generation_task_stats()
+_m1, _m2, _m3, _m4 = st.columns(4)
+_m1.metric("📱 本次已提取", len(st.session_state.phones))
+_m2.metric("🗂️ 注册表收录", _reg_stats["total"], help="phone_registry.yaml 中人工维护与确认过的机型")
+_m3.metric("⚙️ 后台生成中", _task_stats["running"], help="评测/建议/对比正在后台生成的任务数")
+_m4.metric("🧠 RAG 待入库", _reg_stats["rag_pending"], help="未来 RAG 检索库待收录的注册表条目")
 
 # ================= 侧边栏 =================
 with st.sidebar:
@@ -287,6 +302,39 @@ def task_fragment(task_id: str, header: str, download_name: str = None):
     else:
         st.error(f"{t['title']} 生成失败：{t['error']}（可重试）")
 
+@st.fragment(run_every="0.8s")
+def appearance_fragment(task_id: str, phone_id: str, safe_name: str):
+    """外观分析专用轮询：生成中流式展示；完成后渲染注册表缓存的解读文本
+    （分析结果由生成任务写回注册表，访客下次打开无需任何操作即可看到）。"""
+    t = get_generation_task(task_id)
+    entry = None
+    for p in st.session_state.get("phones", []):
+        if p["id"] == phone_id:
+            entry = find_by_spec_url(p['url']) or registry_lookup(p['phone_name'])
+            break
+    cached = (entry or {}).get("appearance") or {}
+
+    if t and t["status"] == "running":
+        elapsed = time.time() - t["started"]
+        h3 = chr(10) + "### "
+        h4 = chr(10) + "#### "
+        text = t["text"].replace(h3, h4) if t["text"] else ""
+        st.info(f"⏳ 外观分析生成中… 已用 {elapsed:.0f} 秒" + (f"，正文已到 {len(text)} 字" if text else ""))
+        if text:
+            st.markdown(text)
+    elif t and t["status"] == "error":
+        st.error(f"外观分析生成失败：{t['error']}（可重试）")
+        if cached.get("analysis"):
+            st.markdown("**🎨 外观解读**（历史版本）")
+            st.markdown(cached["analysis"])
+    elif cached.get("analysis"):
+        st.markdown("**🎨 外观解读**（基于官方渲染图，非真机实拍）")
+        h3 = chr(10) + "### "
+        st.markdown(cached["analysis"].replace(h3, chr(10) + "#### "))
+        st.download_button("⬇️ 下载外观解读", data=cached["analysis"],
+                           file_name=f"{safe_name}_外观分析.md", mime="text/markdown",
+                           key=f"dl_ape_{phone_id}")
+
 # ================= 输入与提取 =================
 # ---- 按型号自动查找（V1.4 功能①） ----
 with st.expander("🔎 按型号自动查找参数页（不知道URL？输入型号即可）", expanded=False):
@@ -415,133 +463,144 @@ if st.button("🚀 开始提取", type="primary"):
 
             progress_bar.progress(1.0, text="全部处理完成")
 
+if not st.session_state.phones:
+    st.info("👆 **三步上手**：① 粘贴官网参数页 URL，或在上方按型号自动查找 → ② 点击开始提取 → ③ 生成评测 / 对比 / 个性化建议。侧边栏可开启个性化画像与演示者模式。")
+
 # ================= 提取结果展示 =================
 if st.session_state.phones:
     st.markdown("---")
     st.subheader(f"📋 提取结果（共 {len(st.session_state.phones)} 部）")
 
     for phone in st.session_state.phones:
-        phone_id = phone["id"]
-        name = phone["phone_name"]
-        safe_name = str(name).replace(' ', '_').replace('/', '_')
+        with st.container(border=True):
+            phone_id = phone["id"]
+            name = phone["phone_name"]
+            safe_name = str(name).replace(' ', '_').replace('/', '_')
 
-        # 标题行 + 删除按钮
-        title_col, del_col = st.columns([6, 1])
-        title_col.markdown(f"### 📱 {name}")
-        if del_col.button("🗑️ 删除", key=f"del_{phone_id}"):
-            st.session_state.phones = [p for p in st.session_state.phones if p["id"] != phone_id]
-            st.rerun()
+            # 标题行 + 删除按钮
+            title_col, del_col = st.columns([6, 1])
+            title_col.markdown(f"### 📱 {name}")
+            if del_col.button("🗑️ 删除", key=f"del_{phone_id}"):
+                st.session_state.phones = [p for p in st.session_state.phones if p["id"] != phone_id]
+                st.rerun()
 
-        # 参数标签
-        if phone.get('tags'):
-            st.markdown("**🏷️ 参数标签**")
-            tags_html = " ".join([
-                f"<span style='background-color:#f0f0f0; padding:4px 8px; margin-right:6px; "
-                f"border-radius:4px; font-size:0.9em;'>{html.escape(str(tag))}</span>"
-                for tag in phone['tags']
-            ])
-            st.markdown(tags_html, unsafe_allow_html=True)
-            st.markdown("")
+            # 参数标签
+            if phone.get('tags'):
+                st.markdown("**🏷️ 参数标签**")
+                NEG = ("较低", "卡顿", "不支持", "单频", "弱")
+                tags_html = " ".join([
+                    f"<span class='{'tag-neg' if any(k in str(tag) for k in NEG) else 'tag-pos'}'>"
+                    f"{html.escape(str(tag))}</span>"
+                    for tag in phone['tags']
+                ])
+                st.markdown(tags_html, unsafe_allow_html=True)
+                st.markdown("")
 
-        # 知识总结
-        if phone['knowledge_summary']:
-            with st.expander("📚 专业知识解读", expanded=False):
-                display_knowledge_summary(phone['knowledge_summary'], st)
+            # 知识总结
+            if phone['knowledge_summary']:
+                with st.expander("📚 专业知识解读", expanded=False):
+                    display_knowledge_summary(phone['knowledge_summary'], st)
 
-        # 完整参数：分类标签页 + 双栏；冲突明细仅演示者视图展示（访客视图保持干净）
-        presenter = st.session_state.get("presenter_mode", False)
-        conflict_count = len(phone.get('conflicts', []))
-        if presenter and conflict_count:
-            expander_title = f"🔍 完整参数（{conflict_count} 处冲突 ⚠️）"
-        else:
-            expander_title = "🔍 完整参数"
-        with st.expander(expander_title, expanded=False):
-            render_params_tabs(st, phone['params'])
-            if presenter:
-                render_conflicts_table(st, phone.get('conflicts', []))
-
-        # 操作行：提交后台生成任务（点击即返回，界面不锁，可同时生成多部）
-        profile = st.session_state.get("user_profile")
-        action_col1, action_col2, action_col3, action_col4 = st.columns(4)
-
-        if action_col1.button(f"📝 生成评测：{name}", key=f"review_{phone_id}"):
-            accepted = submit_generation_task(
-                f"review_{phone_id}", f"{name} 的评测",
-                lambda cb, p=phone: generate_review(
-                    p["phone_name"], p["params"], p["knowledge_summary"],
-                    profile, on_text=cb)
-            )
-            st.toast("评测已开始后台生成，可继续其他操作 🚀" if accepted
-                     else "该评测已在生成中，请稍候", icon="🚀")
-
-        if action_col2.button("🎯 个性化建议", key=f"advice_{phone_id}",
-                              disabled=profile is None,
-                              help="先在左侧『用户画像』设置身份与侧重要素"):
-            accepted = submit_generation_task(
-                f"advice_{phone_id}", f"{name} 的个性化建议",
-                lambda cb, p=phone: generate_personalized_advice(
-                    p["phone_name"], p["params"], p["knowledge_summary"],
-                    profile, on_text=cb)
-            )
-            st.toast("建议已开始后台生成 🚀" if accepted
-                     else "该建议已在生成中，请稍候", icon="🚀")
-
-        if action_col3.button("🎨 外观分析", key=f"appear_{phone_id}",
-                              help="基于官网产品页渲染图的多模态分析"):
-            with st.status("🖼️ 正在准备外观图（人工补充图优先）...", expanded=True) as img_status:
-                images = []
-                try:
-                    entry = find_by_spec_url(phone['url']) or registry_lookup(phone['phone_name'])
-                    manual_urls = (entry or {}).get("images") or []
-                    if manual_urls:
-                        # Referer 用机型参数页的站点源，防 CDN 防盗链拦截
-                        referer = '/'.join(phone['url'].split('/')[:3])
-                        images = download_manual_images(manual_urls, referer=referer)
-                    if not images:
-                        images = extract_product_images(phone['url'], max_images=4)
-                except Exception as e:
-                    images = []
-                    st.error(f"图片准备出错：{str(e)[:100]}")
-                src_label = "人工补充图" if any((entry or {}).get("images") for _ in [0]) and images else "产品主图页"
-                img_status.update(
-                    label=f"准备到 {len(images)} 张外观图（{src_label}）" if images else "未找到可用外观图",
-                    state="complete" if images else "error", expanded=False
-                )
-            if not images:
-                st.warning("该机型的产品主图页未提取到手机本体图，暂不支持外观分析。可稍后重试。")
+            # 完整参数：分类标签页 + 双栏；冲突明细仅演示者视图展示（访客视图保持干净）
+            presenter = st.session_state.get("presenter_mode", False)
+            conflict_count = len(phone.get('conflicts', []))
+            if presenter and conflict_count:
+                expander_title = f"🔍 完整参数（{conflict_count} 处冲突 ⚠️）"
             else:
-                thumb_cols = st.columns(min(len(images), 4))
-                for tc, im in zip(thumb_cols, images):
-                    try:
-                        tc.image(im["path"], use_container_width=True,
-                                 caption=(im.get("alt") or "产品图")[:18])
-                    except Exception:
-                        tc.caption("图片预览失败")
-                st.caption("图片来源：品牌官网产品页，版权归品牌方所有，此处仅作评测参考引用。")
+                expander_title = "🔍 完整参数"
+            with st.expander(expander_title, expanded=False):
+                render_params_tabs(st, phone['params'])
+                if presenter:
+                    render_conflicts_table(st, phone.get('conflicts', []))
+
+            # 操作行：提交后台生成任务（点击即返回，界面不锁，可同时生成多部）
+            profile = st.session_state.get("user_profile")
+            action_col1, action_col2, action_col3, action_col4 = st.columns(4)
+
+            if action_col1.button(f"📝 生成评测：{name}", key=f"review_{phone_id}"):
                 accepted = submit_generation_task(
-                    f"appear_{phone_id}", f"{name} 的外观分析",
-                    lambda cb, p=phone, ims=images: generate_appearance_analysis(
-                        p["phone_name"], ims, profile, on_text=cb)
+                    f"review_{phone_id}", f"{name} 的评测",
+                    lambda cb, p=phone: generate_review(
+                        p["phone_name"], p["params"], p["knowledge_summary"],
+                        profile, on_text=cb)
                 )
-                st.toast("外观分析已开始后台生成 🚀" if accepted
-                         else "该外观分析已在生成中，请稍候", icon="🚀")
+                st.toast("评测已开始后台生成，可继续其他操作 🚀" if accepted
+                         else "该评测已在生成中，请稍候", icon="🚀")
 
-        params_json = json.dumps(phone['params'], ensure_ascii=False, indent=2)
-        action_col4.download_button(
-            "⬇️ 下载参数 JSON",
-            data=params_json,
-            file_name=f"{safe_name}_params.json",
-            mime="application/json",
-            key=f"dl_params_{phone_id}",
-            use_container_width=True
-        )
+            if action_col2.button("🎯 个性化建议", key=f"advice_{phone_id}",
+                                  disabled=profile is None,
+                                  help="先在左侧『用户画像』设置身份与侧重要素"):
+                accepted = submit_generation_task(
+                    f"advice_{phone_id}", f"{name} 的个性化建议",
+                    lambda cb, p=phone: generate_personalized_advice(
+                        p["phone_name"], p["params"], p["knowledge_summary"],
+                        profile, on_text=cb)
+                )
+                st.toast("建议已开始后台生成 🚀" if accepted
+                         else "该建议已在生成中，请稍候", icon="🚀")
 
-        # 后台任务状态与结果（自动轮询刷新）
-        task_fragment(f"review_{phone_id}", "📝 专业评测", f"{safe_name}_评测.md")
-        task_fragment(f"advice_{phone_id}", "🎯 个性化选购建议（依据左侧用户画像）",
-                      f"{safe_name}_个性化建议.md")
-        task_fragment(f"appear_{phone_id}", "🎨 外观分析（基于官方渲染图，非真机实拍）",
-                      f"{safe_name}_外观分析.md")
+            # ---- 外观区：策展图（人工维护）为唯一数据源（AI 自找图已按需求移除） ----
+            ape_entry = find_by_spec_url(phone['url']) or registry_lookup(phone['phone_name'])
+            curated = (ape_entry or {}).get("images") or []
+            ape_cached = (ape_entry or {}).get("appearance") or {}
+
+            if curated:
+                st.markdown("**🖼️ 官方外观图**（人工策展）")
+                gcols = st.columns(min(len(curated), 4))
+                resolved_paths = []
+                for gc, s in zip(gcols, curated[:4]):
+                    rp = resolve_image(s, referer='/'.join(phone['url'].split('/')[:3]))
+                    if rp:
+                        resolved_paths.append(rp)
+                        try:
+                            gc.image(rp, use_container_width=True)
+                        except Exception:
+                            gc.caption("预览失败")
+                    else:
+                        gc.caption("图片不可用")
+                st.caption("图片来源：品牌官方渲染图，版权归品牌方所有，此处仅作评测参考引用。")
+                if ape_cached.get("analysis"):
+                    st.markdown("**🎨 外观解读**（基于官方渲染图）")
+                    h3 = chr(10) + "### "
+                    st.markdown(ape_cached["analysis"].replace(h3, chr(10) + "#### "))
+
+            if action_col3.button("🎨 生成/更新外观分析", key=f"appear_{phone_id}",
+                                  help="基于人工策展的官方渲染图进行视觉分析" if curated
+                                       else "该机型暂无策展外观图"):
+                if not curated:
+                    st.warning("该机型暂无策展外观图——请在演示者模式『手动补录/编辑机型』中补充官方渲染图后重试。")
+                else:
+                    resolved = [p2 for p2 in (resolve_image(s, '/'.join(phone['url'].split('/')[:3])) for s in curated) if p2]
+                    if not resolved:
+                        st.error("策展图全部下载失败，请检查链接或重新上传")
+                    else:
+                        def _ape_task(cb, p=phone, ims=resolved, nm=name):
+                            res = generate_appearance_analysis(nm, ims, profile, on_text=cb)
+                            if res:
+                                registry_upsert(p['phone_name'], p['url'],
+                                                appearance={"analysis": res})
+                            return res
+                        accepted = submit_generation_task(
+                            f"appear_{phone_id}", f"{name} 的外观分析", _ape_task)
+                        st.toast("外观分析已开始后台生成 🚀" if accepted
+                                 else "该外观分析已在生成中，请稍候", icon="🚀")
+
+            params_json = json.dumps(phone['params'], ensure_ascii=False, indent=2)
+            action_col4.download_button(
+                "⬇️ 下载参数 JSON",
+                data=params_json,
+                file_name=f"{safe_name}_params.json",
+                mime="application/json",
+                key=f"dl_params_{phone_id}",
+                use_container_width=True
+            )
+
+            # 后台任务状态与结果（自动轮询刷新）
+            task_fragment(f"review_{phone_id}", "📝 专业评测", f"{safe_name}_评测.md")
+            task_fragment(f"advice_{phone_id}", "🎯 个性化选购建议（依据左侧用户画像）",
+                          f"{safe_name}_个性化建议.md")
+            appearance_fragment(f"appear_{phone_id}", phone_id, safe_name)
+
 
         st.markdown("---")
 
@@ -557,6 +616,18 @@ if len(st.session_state.phones) >= 2:
         format_func=lambda i: phone_labels[i]
     )
 
+    # 五维评分对比（启发式评分，规则见 scoring.py）
+    if len(selected_ids) >= 2:
+        import pandas as pd
+        score_rows = {}
+        for p in st.session_state.phones:
+            if p["id"] in selected_ids:
+                s = score_phone(p["params"], p.get("knowledge_summary"))
+                score_rows[p["phone_name"]] = {k: (v or 0) for k, v in s.items()}
+        if score_rows:
+            st.markdown("**📊 五维评分对比**（启发式评分，仅供参考）")
+            st.bar_chart(pd.DataFrame(score_rows))
+        st.markdown("")
     if st.button("🔍 生成对比评测", disabled=len(selected_ids) < 2):
         phones_data = [
             {
@@ -600,25 +671,52 @@ if st.session_state.get("presenter_mode"):
         } for p in registry_phones()]
         st.dataframe(rows, use_container_width=True, hide_index=True)
 
-    with st.expander("➕ 手动补录机型", expanded=False):
-        m_model = st.text_input("型号", key="reg_model",
+    with st.expander("➕ 手动补录 / 编辑机型与外观图", expanded=False):
+        def _prefill():
+            sel = st.session_state.get("reg_edit_sel")
+            if sel and sel != "（录入新机型）":
+                e0 = registry_lookup(sel)
+                if e0:
+                    st.session_state["reg_model_m"] = e0.get("model", "")
+                    st.session_state["reg_url_m"] = e0.get("spec_url", "")
+                    st.session_state["reg_brand_m"] = e0.get("brand") or "OPPO"
+                    st.session_state["reg_alias_m"] = ", ".join(e0.get("aliases") or [])
+        brand_names = list(BRAND_ADAPTERS.keys())
+        edit_sel = st.selectbox("编辑已收录机型（选它自动带出信息）",
+                                ["（录入新机型）"] + [p.get("model", "") for p in registry_phones()],
+                                key="reg_edit_sel", on_change=_prefill)
+        m_model = st.text_input("型号", key="reg_model_m",
                                 placeholder="如：小米17T（官方名或常用叫法）")
-        m_url = st.text_input("参数页 URL", key="reg_url",
-                              placeholder="https://...")
-        m_brand = st.selectbox("品牌", list(BRAND_ADAPTERS.keys()))
-        m_alias = st.text_input("别名（可选，逗号分隔）", key="reg_alias",
+        m_url = st.text_input("参数页 URL", key="reg_url_m", placeholder="https://...")
+        _cur_brand = st.session_state.get("reg_brand_m", "OPPO")
+        m_brand = st.selectbox("品牌", brand_names,
+                               index=brand_names.index(_cur_brand) if _cur_brand in brand_names else 0,
+                               key="reg_brand_m")
+        m_alias = st.text_input("别名（可选，逗号分隔）", key="reg_alias_m",
                                 placeholder="如：Xiaomi 17T, 17T")
-        m_images = st.text_area("外观图 URL（可选，多张换行/逗号分隔）", key="reg_images",
+        m_files = st.file_uploader("上传外观图（可多选，自动压缩为 webp 存入 assets/，随 git 永久保存）",
+                                   type=["png", "jpg", "jpeg", "webp"],
+                                   accept_multiple_files=True, key="reg_files")
+        m_images = st.text_area("或粘贴外观图 URL（可选，空格/逗号/换行分隔）", key="reg_images_m",
                                 height=68,
                                 placeholder="预约页/无渲染图机型可人工补充官方概念图链接，外观分析将优先使用")
-        if st.button("📥 录入注册表"):
+        if st.button("📥 录入 / 更新注册表"):
             if m_model.strip() and m_url.strip():
                 aliases = [a.strip() for a in m_alias.split(",") if a.strip()]
-                raw_imgs = m_images.replace(",", "\n").split("\n")
-                images = [u.strip() for u in raw_imgs if u.strip().startswith("http")]
+                url_imgs = [u.strip() for u in m_images.replace(",", " ").split()
+                            if u.strip().startswith("http")]
+                saved_paths = save_uploaded_images(m_model.strip(), m_files) if m_files else []
+                all_imgs = saved_paths + url_imgs
                 registry_upsert(m_model.strip(), m_url.strip(), brand=m_brand,
-                                aliases=aliases or None, images=images or None, source="manual")
-                st.success(f"已录入「{m_model.strip()}」✅ 该型号此后查找将直接命中注册表" +
-                           ("（含人工补充外观图）" if images else ""))
+                                aliases=aliases or None, images=all_imgs or None, source="manual")
+                msg = f"已录入「{m_model.strip()}」✅ 此后查找将直接命中注册表"
+                detail = []
+                if saved_paths: detail.append(f"上传 {len(saved_paths)} 张（assets/ 永久保存）")
+                if url_imgs: detail.append(f"URL 图 {len(url_imgs)} 张")
+                st.success(msg + ("（" + "，".join(detail) + "）" if detail else ""))
             else:
-                st.error("型号和 URL 都不能为空")
+                st.error("型号和参数页 URL 都不能为空")
+
+# ================= 页脚 =================
+st.markdown("---")
+st.caption("数据来源：各品牌官网公开参数页 · 外观图片版权归品牌方所有，仅作评测参考引用 · 本项目为个人学习作品")

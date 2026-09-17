@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Any, List, Optional, Callable, Tuple
 
 from knowledge_base import PhoneKnowledgeBase
+from resolvers import normalize_model
 
 # ================= 1. 配置（支持 .env / 环境变量） =================
 def _load_dotenv(path: str = None):
@@ -51,6 +52,7 @@ DISABLE_THINKING = os.environ.get("DISABLE_THINKING", "1") != "0"
 MAX_PARALLEL_GENERATIONS = int(os.environ.get("MAX_PARALLEL_GENERATIONS", "3"))
 CACHE_DIR = os.path.join(BASE_DIR, "cache")
 IMAGE_CACHE_DIR = os.path.join(CACHE_DIR, "images")
+IMAGE_ASSETS_DIR = os.path.join(BASE_DIR, "assets", "phone_images")
 
 client = OpenAI(api_key=EXTRACT_API_KEY or "sk-not-configured", base_url="https://api.deepseek.com")
 review_client = OpenAI(api_key=REVIEW_API_KEY or "sk-not-configured", base_url="https://api.deepseek.com")
@@ -1204,79 +1206,48 @@ def _download_image(u: str, origin: str) -> Optional[str]:
         print(f"⚠️ 图片下载失败：{str(e)[:60]}")
         return None
 
-def extract_product_images(spec_url: str, max_images: int = 4) -> List[dict]:
+def resolve_image(src: str, referer: str = None) -> Optional[str]:
+    """统一图片解析（来源无关）：本地 assets 相对路径存在则直接返回；
+    http(s) 引用走下载+校验+缓存。返回可用的本地路径或 None。"""
+    s = str(src).strip()
+    if not s:
+        return None
+    if s.startswith(("http://", "https://")):
+        return _download_image(s, referer or '/'.join(s.split('/')[:3]))
+    p = s if os.path.isabs(s) else os.path.join(BASE_DIR, s)
+    return p if os.path.exists(p) else None
+
+def save_uploaded_images(model: str, files) -> List[str]:
     """
-    从参数页 URL 推导产品主图页并提取真产品图（V2.0：品牌感知，走适配器）。
-    图片落盘 cache/images/ 复用；经魔数+PIL 双重校验，坏格式自动跳过。
-    返回 [{path, url, alt}]。
+    保存演示者上传的外观图：压缩（最长边 1600px、转 webp 质量 85）后
+    落 assets/phone_images/{机型slug}/，返回注册表引用（相对路径列表）。
+    策展图片随 git 提交——本地永久、云端部署随仓库自带。
     """
-    from resolvers import match_brand_by_host, landing_from_spec, image_exclude_words
-    spec_url = str(spec_url).strip()
-    brand = match_brand_by_host(spec_url.split('/')[2] if spec_url.count('/') >= 2 else '')
-    landing = landing_from_spec(spec_url, brand)
-    md = load_cache(landing, "page")
-    if not (md and md.get("text")):
-        report_md = fetch_markdown(landing)
-        if not report_md:
-            print(f"⚠️ 主图页抓取失败：{landing}")
-            return []
-        save_cache(landing, "page", {"url": landing, "text": report_md})
-        md_text = report_md
-    else:
-        md_text = md["text"]
-
-    # 机型 slug（加分项，不再是必要条件——vivo/iQOO 等站的真图是 CDN 哈希路径，
-    # 反而页面自链接才含 slug。V2.0a 改为资产特征正向打分，见下）
-    segments = [s for s in landing.split('/') if s]
-    slug = segments[-1].lower() if segments else ""
-
-    exclude = image_exclude_words(brand)
-    pairs = re.findall(r'!\[([^\]]*)\]\((https?://[^)\s]+?)\)', md_text)
-
-    def _asset_score(u: str) -> Optional[int]:
-        """图片资产正向打分：越像真图分越高；非资产/自链接/排除词返回 None。
-        实测教训：vivo 页 137 个含 slug 的"图"全是页面自链接，真图是
-        静态 CDN 哈希路径（不含 slug）——slug 必须降级为加分项。"""
-        ul = u.lower()
-        if ul.rstrip('/?') == landing.rstrip('/?') or (landing and ul.startswith(landing.lower().rstrip('/'))):
-            return None                                    # 页面自链接
-        if any(x in ul for x in exclude):
-            return None
-        score = 0
-        if re.search(r'\.(png|jpe?g|webp)(\?|$)', ul):
-            score += 2
-        elif not re.search(r'\.(png|jpe?g|webp|avif|gif)(\?|$)', ul):
-            # 无图片扩展名：需有资产路径/域名特征才考虑
-            if not any(k in ul for k in ("image", "asset", "static", "img", "fs.", "cdn", "dam")):
-                return None
-            score += 1
-        if any(k in ul for k in ("static", "asset", "fs.", "cdn", "dam", "img")):
-            score += 1
-        if slug and slug in ul:
-            score += 1                                     # 含机型 slug 加分
-        return score
-
-    scored = []
-    seen = set()
-    for alt, u in pairs:
-        if u in seen:
-            continue
-        seen.add(u)
-        s = _asset_score(u)
-        if s is not None and s > 0:
-            scored.append((s, alt.strip(), u))
-    scored.sort(key=lambda x: -x[0])
-    picked = [(alt, u) for s, alt, u in scored[:max_images]]
-
-    origin = '/'.join(landing.split('/')[:3])
-    os.makedirs(IMAGE_CACHE_DIR, exist_ok=True)
-    out = []
-    for alt, u in picked:
-        path = _download_image(u, origin)
-        if path:
-            out.append({"path": path, "url": u, "alt": alt})
-    print(f"🖼️ 产品图提取：候选 {len(picked)}，成功 {len(out)}")
-    return out
+    try:
+        from PIL import Image
+        import io as _io
+    except ImportError:
+        print("⚠️ 缺少 Pillow，无法处理上传图片")
+        return []
+    slug = normalize_model(model) or "phone"
+    out_dir = os.path.join(IMAGE_ASSETS_DIR, slug)
+    os.makedirs(out_dir, exist_ok=True)
+    saved = []
+    idx = len(os.listdir(out_dir))
+    for f in files:
+        idx += 1
+        try:
+            img = Image.open(_io.BytesIO(f.getvalue())).convert("RGB")
+            w, h = img.size
+            if max(w, h) > 1600:
+                scale = 1600 / max(w, h)
+                img = img.resize((max(1, int(w * scale)), max(1, int(h * scale))))
+            rel = os.path.relpath(os.path.join(out_dir, f"{idx}.webp"), BASE_DIR).replace("\\", "/")
+            img.save(os.path.join(BASE_DIR, rel), "WEBP", quality=85)
+            saved.append(rel)
+        except Exception as e:
+            print(f"⚠️ 上传图片处理失败：{str(e)[:60]}")
+    return saved
 
 def download_manual_images(urls: List[str], referer: str = None) -> List[dict]:
     """下载人工补充的概念图/官方图（注册表 images 字段），复用同一校验与缓存"""
@@ -1387,6 +1358,13 @@ def get_generation_task(task_id: str) -> Optional[dict]:
     with _tasks_lock:
         t = _tasks.get(task_id)
         return dict(t) if t else None
+
+def generation_task_stats() -> Dict[str, int]:
+    """后台任务统计（顶部指标行用）"""
+    with _tasks_lock:
+        running = sum(1 for t in _tasks.values() if t["status"] == "running")
+        done = sum(1 for t in _tasks.values() if t["status"] == "done")
+    return {"running": running, "done": done}
 
 # ================= 18. 交互式输入（命令行模式） =================
 def interactive_mode():

@@ -14,6 +14,11 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://wwwstatic.vivo.com.cn/vivoportal/files/resource/files/1695178441055/5DsI1k7YlPy53.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952873128/71087008a75d630fb68baf379286c58d.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952867569/8db534fe34139d685e8b3491a2464014.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788953219901/d7ebdd1957fb929ce9fd6ef9b478dfa1.png
 - model: OPPO Find X9s Pro 卫星通信版
   aliases:
   - Find X9s Pro
@@ -31,6 +36,11 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://www.oppo.com/content/dam/oppo_com/oppo/product-asset-library/find-x/find-x9s-pro-find-x9-ultra-cn/find-x9s-pro/v1/assets/images-ksp-5-pc-1-3fbb19.jpg.webp
+  - https://www.oppo.com/content/dam/oppo_com/oppo/product-asset-library/find-x/find-x9s-pro-find-x9-ultra-cn/find-x9s-pro/v1/assets/images-ksp-border-pc-1-9ceb1f.png.webp
+  - https://www.oppo.com/content/dam/oppo_com/oppo/product-asset-library/find-x/find-x9s-pro-find-x9-ultra-cn/find-x9s-pro/v1/assets/images-ksp-6-pc-1-075c8d.jpg.webp
+  - https://www.oppo.com/content/dam/oppo_com/oppo/product-asset-library/find-x/find-x9s-pro-find-x9-ultra-cn/find-x9s-pro/v1/assets/images-ksp-7-pc-1-51b733.jpg.webp
 - model: OPPO Find X9 Ultra
   aliases:
   - Find X9 Ultra
@@ -43,10 +53,14 @@ phones:
   sources: []
   added_at: '2026-09-17'
   updated_at: '2026-09-17'
-  verified_at: '2026-09-14'
+  verified_at: '2026-09-17'
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://www.oppo.com/content/dam/oppo_com/oppo/product-asset-library/find-x/find-x9s-pro-find-x9-ultra-cn/find-x9-ultra/v1/assets/images-coloros-1-f1772e.png.webp
+  - https://www.oppo.com/content/dam/oppo_com/oppo/product-asset-library/find-x/find-x9s-pro-find-x9-ultra-cn/find-x9-ultra/v1/assets/images-ksp-ksp-1-1-90-698c1a.jpg
+  - https://www.oppo.com/content/dam/oppo_com/oppo/product-asset-library/find-x/find-x9s-pro-find-x9-ultra-cn/find-x9-ultra/v1/assets/videos-design-0-pc-cover-1-1e160b.jpg.webp
 - model: vivo X200
   aliases:
   - X200
@@ -58,10 +72,15 @@ phones:
   sources: []
   added_at: '2026-09-17'
   updated_at: '2026-09-17'
-  verified_at: '2026-09-15'
+  verified_at: '2026-09-17'
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://wwwstatic.vivo.com.cn/vivoportal/files/resource/files/1695178441055/5DsI1k7YlPy53.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952873128/71087008a75d630fb68baf379286c58d.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952867569/8db534fe34139d685e8b3491a2464014.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788953219901/d7ebdd1957fb929ce9fd6ef9b478dfa1.png
 - model: Redmi K70
   aliases:
   - K70
@@ -73,10 +92,15 @@ phones:
   sources: []
   added_at: '2026-09-17'
   updated_at: '2026-09-17'
-  verified_at: '2026-09-15'
+  verified_at: '2026-09-17'
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/redmik70720hcn/index/8529.jpg?x-fds-process=image/resize,q_90,f_webp
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/redmik70720hcn/index/10000.png?x-fds-process=image/resize,q_90,f_webp
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/redmik70720hcn/index/8542.png?x-fds-process=image/resize,q_90,f_webp
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/redmik70720hcn/index/8557.jpg?x-fds-process=image/resize,q_90,f_webp
 - model: 小米17T
   aliases:
   - 小米17T
@@ -92,6 +116,11 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://i02.appmifile.com/mi-com-product/fly-birds/xiaomi-17t/pc/b720a007c23a022e187f575b2c81808d.jpg
+  - https://i02.appmifile.com/mi-com-product/fly-birds/xiaomi-17t/pc/14355a09496931df57b7bc2d72903e98.png
+  - https://i02.appmifile.com/mi-com-product/fly-birds/xiaomi-17t/pc/1a3744e7b8a35761e91b25b02a223231.jpg
+  - https://i02.appmifile.com/mi-com-product/fly-birds/xiaomi-17t/pc/e82b569b0b0153fcefbc4a7ce84209cb.png
 - model: 小米17
   aliases: []
   brand: 小米
@@ -106,6 +135,11 @@ phones:
     corpus_status: pending
   source: confirmed
   note: 自动采集未达置信度（0%）
+  images:
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/new-product-images/xiaomi-17_55032/images/4245.png
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/new-product-images/xiaomi-17_55032/images/14265.png
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/new-product-images/xiaomi-17_55032/images/11309.png
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/new-product-images/xiaomi-17_55032/images/11349.png
 - model: 小米15
   aliases: []
   brand: 小米
@@ -120,6 +154,11 @@ phones:
     corpus_status: pending
   source: confirmed
   note: 自动采集未达置信度（0%）
+  images:
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/xiaomi-15_852852/images/14.png
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/xiaomi-15_852852/images/1050.png
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/xiaomi-15_852852/images/1053.png
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/xiaomi-15_852852/images/1062.png
 - model: 红米 K80
   aliases: []
   brand: Redmi
@@ -134,6 +173,11 @@ phones:
     corpus_status: pending
   source: confirmed
   note: 自动采集未达置信度（0%）
+  images:
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/redmi-k80_373232/images/23_1.jpg
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/redmi-k80_373232/images/27853.png
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/redmi-k80_373232/images/27857.png
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/redmi-k80_373232/images/21251.png
 - model: OPPO Reno14
   aliases:
   - OPPO Reno14
@@ -148,6 +192,11 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://www.oppo.com/content/dam/oppo_com/common/mkt/v2-2/oppo-reno16-series-cn/reno16/navigation/440-440-white.png
+  - https://www.oppo.com/content/dam/oppo_com/common/mkt/v2-2/oppo-pad-mini-cn/440-440-purple.png
+  - https://www.oppo.com/content/dam/oppo_com/common/mkt/v2-2/oppo-enco-clip2-cn/navigation/440-440-gold.png
+  - https://www.oppo.com/content/dam/oppo_com/common/mkt/v2-2/oppo-watch-x3-cn/navigation/440-440-orange.png
 - model: OPPO Find X9
   aliases:
   - OPPO Find X9
@@ -162,6 +211,11 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://www.oppo.com/content/dam/oppo_com/oppo/product-asset-library/find-x/find-x9-series-cn/find-x9/assets/images-ksp-j-1-pc-d7111-6ebf41.jpg.webp
+  - https://www.oppo.com/content/dam/oppo_com/oppo/product-asset-library/find-x/find-x9-series-cn/find-x9/assets/images-ksp-arrow-pc-d7111-568242.png.webp
+  - https://www.oppo.com/content/dam/oppo_com/oppo/product-asset-library/find-x/find-x9-series-cn/find-x9/assets/images-ksp-j-2-pc-d7111-f5a06e.jpg.webp
+  - https://www.oppo.com/content/dam/oppo_com/oppo/product-asset-library/find-x/find-x9-series-cn/find-x9/assets/images-ksp-j-3-pc-d7111-40f1c2.jpg
 - model: vivo X200 Pro
   aliases:
   - vivo X200 Pro
@@ -176,12 +230,17 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://wwwstatic.vivo.com.cn/vivoportal/files/resource/files/1695178441055/5DsI1k7YlPy53.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952873128/71087008a75d630fb68baf379286c58d.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952867569/8db534fe34139d685e8b3491a2464014.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788953219901/d7ebdd1957fb929ce9fd6ef9b478dfa1.png
 - model: vivo X300
   aliases:
   - vivo X300
   brand: vivo
   spec_url: https://www.vivo.com.cn/vivo/param/x300
-  landing_url: ''
+  landing_url: https://www.vivo.com.cn/vivo/x300/
   keywords: []
   sources: []
   added_at: '2026-09-17'
@@ -190,6 +249,11 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://wwwstatic.vivo.com.cn/vivoportal/files/resource/files/1695178441055/5DsI1k7YlPy53.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952873128/71087008a75d630fb68baf379286c58d.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952867569/8db534fe34139d685e8b3491a2464014.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788953219901/d7ebdd1957fb929ce9fd6ef9b478dfa1.png
 - model: 荣耀 Magic7
   aliases:
   - 荣耀 Magic7
@@ -204,6 +268,10 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://www-file.honor.com/content/dam/honor/common/new-home/key-product-component/flat-move/honor-600/cn/honor600-purple-left-pc.png
+  - https://www-file.honor.com/content/dam/honor/common/new-home/key-product-component/flat-move/honor-600/cn/honor600-purple-right-pc.png
+  - https://www-file.honor.com/content/dam/honor/common/new-home/key-product-component/flat-move/honor-win-turbo/win-turbo-white-left-pc.png
 - model: 一加 13
   aliases:
   - 一加 13
@@ -218,6 +286,10 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://image01.oneplus.cn/shop/201805/25/1926/942639bb4813da55cee78b3c50186dfe.png
+  - https://statics.oneplus.cn/v2/img/common/record.png
+  - https://image01.oneplus.cn/shop/201805/25/639/48cf2a49619d2b8f480c2cd508d873c2.png
 - model: 华为 Mate 70
   aliases:
   - 华为 Mate 70
@@ -232,6 +304,8 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://consumer-img.huawei.com/content/dam/huawei-cbg-site/greate-china/cn/mkt/v4/footer/weixin.jpg
 - model: iQOO 15
   aliases: []
   brand: iQOO
@@ -244,8 +318,13 @@ phones:
   verified_at: '2026-09-17'
   rag:
     corpus_status: pending
-  source: manual
+  source: confirmed
   note: 自动采集未达置信度（76%）
+  images:
+  - https://wwwstatic.vivo.com.cn/vivoportal/files/resource/files/1695178441055/5DsI1k7YlPy53.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952873128/71087008a75d630fb68baf379286c58d.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952867569/8db534fe34139d685e8b3491a2464014.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788953219901/d7ebdd1957fb929ce9fd6ef9b478dfa1.png
 - model: iQOO Neo10
   aliases: []
   brand: iQOO
@@ -260,6 +339,11 @@ phones:
     corpus_status: pending
   source: confirmed
   note: 自动采集未达置信度（85%）
+  images:
+  - https://asia-exstatic.vivoglobal.com/static/img/image/404-PC_31daffa.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1720516961231/180550595baa1cc834ee0dbf9d3ba3fb.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1720517016000/bd8bd5287f32604de316ddb0b55d21b7.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1720516568339/65cae1a19dd6864bfb70cf8b042a302b.png
 - model: vivo X300 Ultra
   aliases:
   - vivo X300 Ultra
@@ -274,6 +358,10 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/product/1782820279212/images/pc/ksp1.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/product/1782820279212/images/pc/ksp2.png
+  - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/product/1782820279212/images/pc/ksp3.png
 - model: 荣耀 Magic8
   aliases:
   - 荣耀 Magic8
@@ -288,6 +376,10 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://www-file.honor.com/content/dam/honor/common/new-home/key-product-component/flat-move/honor-600/cn/honor600-purple-left-pc.png
+  - https://www-file.honor.com/content/dam/honor/common/new-home/key-product-component/flat-move/honor-600/cn/honor600-purple-right-pc.png
+  - https://www-file.honor.com/content/dam/honor/common/new-home/key-product-component/flat-move/honor-win-turbo/win-turbo-white-left-pc.png
 - model: 荣耀 400 Pro
   aliases:
   - 荣耀 400 Pro
@@ -302,6 +394,10 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://www-file.honor.com/content/dam/honor/common/new-home/key-product-component/flat-move/honor-600/cn/honor600-purple-left-pc.png
+  - https://www-file.honor.com/content/dam/honor/common/new-home/key-product-component/flat-move/honor-600/cn/honor600-purple-right-pc.png
+  - https://www-file.honor.com/content/dam/honor/common/new-home/key-product-component/flat-move/honor-win-turbo/win-turbo-white-left-pc.png
 - model: 一加 15
   aliases:
   - 一加 15
@@ -316,6 +412,10 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://statics.oneplus.cn/v2/img/common/record.png
+  - https://image01.oneplus.cn/shop/201805/25/639/48cf2a49619d2b8f480c2cd508d873c2.png
+  - https://image01.oneplus.cn/shop/201805/25/1926/942639bb4813da55cee78b3c50186dfe.png
 - model: 华为 Pura 80
   aliases:
   - 华为 Pura 80
@@ -330,6 +430,8 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://consumer-img.huawei.com/content/dam/huawei-cbg-site/greate-china/cn/mkt/v4/footer/weixin.jpg
 - model: 真我 GT8 Pro
   aliases:
   - GT8 Pro
@@ -343,8 +445,13 @@ phones:
   verified_at: '2026-09-17'
   rag:
     corpus_status: pending
-  source: manual
+  source: confirmed
   note: 自动采集未达置信度（0%）
+  images:
+  - https://static.realme.net/v3/common/images/service-7d998b548c.png
+  - https://static.realme.net/v3/common/images/service_hover-c442d0f025.png
+  - https://r1.realme.net/general/20251021/176103797804389a708056f0947a7963eeebe00a99828.png?width=1080&height=1080&size=213780
+  - https://r1.realme.net/general/20251021/1761039009175d86e576d470c432e9f491003d9066917.png?width=1080&height=1080&size=199634
 - model: 三星 Galaxy S26
   aliases:
   - Galaxy S26
@@ -375,6 +482,11 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://www.oppo.com/content/dam/oppo_com/common/mkt/v2-2/oppo-reno16-series-cn/reno16/navigation/440-440-white.png
+  - https://www.oppo.com/content/dam/oppo_com/common/mkt/v2-2/oppo-pad-mini-cn/440-440-purple.png
+  - https://www.oppo.com/content/dam/oppo_com/common/mkt/v2-2/oppo-enco-clip2-cn/navigation/440-440-gold.png
+  - https://www.oppo.com/content/dam/oppo_com/common/mkt/v2-2/oppo-watch-x3-cn/navigation/440-440-orange.png
 - model: Redmi K90
   aliases:
   - Redmi K90
@@ -389,6 +501,11 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/new-product-images/redmi-k90_40387/images/30044.png
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/new-product-images/redmi-k90_40387/images/31973.png
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/new-product-images/redmi-k90_40387/images/26387.png
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/new-product-images/redmi-k90_40387/images/25251.png
 - model: 小米 Civi 5 Pro
   aliases:
   - 小米 Civi 5 Pro
@@ -403,6 +520,11 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/civi-5-pro_8505/images/519.png
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/civi-5-pro_8505/images/7.png
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/civi-5-pro_8505/images/9.png
+  - https://cdn.cnbj1.fds.api.mi-img.com/product-images/civi-5-pro_8505/images/13.png
 - model: iPhone 17 Pro Max
   aliases:
   - iPhone 17 Pro Max
@@ -431,6 +553,11 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://www.apple.com.cn/v/iphone-17/i/images/site/localnav/iphone_duo__e9l3tt0firiy_large.png
+  - https://www.apple.com.cn/v/iphone-17/i/images/site/localnav/iphone_air__btyns2fslho2_large.png
+  - https://www.apple.com.cn/v/iphone-17/i/images/site/localnav/compare__f595huzzjdym_large.png
+  - https://www.apple.com.cn/v/iphone-17/i/images/site/localnav/accessories__eyzig7pyj3gy_large.png
 - model: iPhone 17 Air
   aliases:
   - iPhone 17 Air
@@ -473,6 +600,11 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-16-finish-select-202409-6-1inch?wid=5120&hei=2880&fmt=p-jpg&qlt=80&.v=UXp1U3VDY3IyR1hNdHZwdFdOLzg1V0tFK1lhSCtYSGRqMUdhR284NTN4K2k2SkpnN3c0VXdqTFlOQWw0ako4Z1M1L0VuR3dWZGNjaVhFSWhJU255OFl5OUhiNzhUVU5ZRjJ5OHdsNWVBZngxckF3eHBIRjJWKzVSR0lNNEZtSXk&traceId=1
+  - https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-16-finish-select-202409-6-1inch_AV1?wid=5120&hei=2880&fmt=p-jpg&qlt=80&.v=UXp1U3VDY3IyR1hNdHZwdFdOLzg1V0tFK1lhSCtYSGRqMUdhR284NTN4L2RJbmltQWhGZkQyVGNjT3IyemNOZWd2S3NaRzcrU0dmYjNHTUFiMnlsWGEwekI5ZWpRa0o2WWdVYzdzTUdBdFYrZzgzK3BvTTNyTSs2NGJET0s5ZHQ&traceId=1
+  - https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-16-ultramarine-select-202409_AV2?wid=750&hei=506&fmt=jpeg&qlt=90&.v=aWI5aGdudlZCalMrV3A2QU5NeUlaUS9CQ2hhaHB3cVp0QldQUmg0R3F6NllxU28wRmJ4M1hpa3FkUmRTa2QzR3JjdDZMRlVXdmhWTll0OTAwWGNkeVFXTjFyWXN6MmFjVTVuYkt2UFozY1c1dlhmNHBVNHcrZU96OHBHOXk0MC8
+  - https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/iphone-16-ultramarine-witb-202409?wid=346&hei=784&fmt=jpeg&qlt=90&.v=aWI5aGdudlZCalMrV3A2QU5NeUlaWFhjWFNGMG9iRE96TzlpbU9tL2ZxeTZJcEY2UlpFYnJyeFZ1NzZQZHZjZkNBd3lOUFpnTTVCeDVDYzlNNEhMcFJlVEVNRnI1d1JlMkh5WWY4Q1BWZzVWLy8yYVJsOUl1Z0ZiNnNBNUtLZTI
 - model: iPhone 16e
   aliases:
   - iPhone 16e
@@ -487,12 +619,17 @@ phones:
   rag:
     corpus_status: pending
   source: confirmed
+  images:
+  - https://www.apple.com.cn/iphone/home/images/meta/wechat/iphone__bh930eyjnj0i_og.png
+  - https://www.apple.com.cn/v/iphone/home/ck/images/overview/chapternav/iphone_duo__hefmlegzwbmi_large.png
+  - https://www.apple.com.cn/iphone/home/images/overview/chapternav/iphone_18_pro__dj48ysc0yagm_large.png
+  - https://www.apple.com.cn/v/iphone/home/ck/images/overview/chapternav/iphone_air__b5qmgl05ojyq_large.png
 - model: iqoo15ultra
   aliases:
   - iqoo15ultra
-  brand: iQOO
+  brand: vivo
   spec_url: https://www.vivo.com.cn/vivo/param/iqoo15ultra
-  landing_url: ''
+  landing_url: https://www.vivo.com.cn/vivo/iqoo15ultra/
   keywords: []
   sources: []
   added_at: '2026-09-17'
@@ -500,7 +637,7 @@ phones:
   verified_at: '2026-09-17'
   rag:
     corpus_status: pending
-  source: manual
+  source: confirmed
   images:
   - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952873128/71087008a75d630fb68baf379286c58d.png
   - https://cn-exstatic-vivofs.iqoo.com/Br81IMbjh1IEtVmx/1788952867569/8db534fe34139d685e8b3491a246.png
