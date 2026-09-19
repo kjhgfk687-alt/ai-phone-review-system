@@ -163,8 +163,7 @@ python -c "import rag; rag.rebuild_index()"
 ├── phone_knowledge.yaml    # 策展知识库（芯片/屏幕/电池/相机/品牌）
 ├── rag_eval.yaml           # 检索评测集（14 例）
 ├── deploy/                 # 云端运维三件套（install/update/backup）
-├── .env.example            # 配置模板
-└── CHANGELOG.md / 改进方法.md / 技术评估.md
+└── .env.example            # 配置模板
 ```
 
 ## 已知限制与规划
@@ -177,4 +176,4 @@ python -c "import rag; rag.rebuild_index()"
 
 ## 许可与引用
 
-产品背景调研与设计详见《AI手机参数提取与评测系统产品文档》。本项目为个人作品，仅供学习交流。
+本项目为个人作品，仅供学习交流。

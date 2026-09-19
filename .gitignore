@@ -9,3 +9,15 @@ output/
 ceshi/
 cache/
 knowledge/vectors.json
+
+# ==== 个人文档 / AI 会话文件（仅本地，不入仓库） ====
+AGENTS.md
+CHANGELOG.md
+技术评估.md
+改进方法.md
+.zcode/
+*.rar
+AI手机参数提取与评测系统产品文档*
+手机选购*.docx
+手机选购*.pdf
+knowledge/rag_index.json
