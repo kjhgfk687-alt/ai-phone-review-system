@@ -119,8 +119,9 @@ def main():
         except Exception as e:
             result, name, error = None, None, str(e)[:80]
         if result and name:
+            from resolvers import detect_brand as _db
             if quality_ok(result):
-                registry.upsert(name, u, brand=None, source="confirmed")
+                registry.upsert(name, u, brand=_db(name), source="confirmed")
                 results["extracted"].append(name)
                 print(f"  ✅ {name}（{time.time()-t0:.1f}s，"
                       f"{len([k for k in result if not str(k).startswith('_')])} 大类）")
@@ -142,7 +143,7 @@ def main():
             except Exception as e:
                 result, name, error = None, None, str(e)[:60]
             if result and name and quality_ok(result):
-                registry.upsert(name, u, source="confirmed")
+                registry.upsert(name, u, brand=_db(name), source="confirmed")
                 results["extracted"].append(name)
                 print(f"  ✅ 重试成功：{name}")
             else:
